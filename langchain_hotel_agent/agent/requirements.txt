@@ -1,0 +1,8 @@
+langchain
+langchain-google-genai
+langchain-community
+copilotkit
+uvicorn
+python-dotenv
+langchain-core
+langgraph-cli
