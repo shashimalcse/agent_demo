@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from typing import List, Optional
-from schemas import *  # Import directly from local schemas file
+from .schemas import *
 
 app = FastAPI()
 

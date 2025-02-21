@@ -1,14 +1,11 @@
-"""Demo"""
-
 import os
 from dotenv import load_dotenv
-load_dotenv() # pylint: disable=wrong-import-position
-
+load_dotenv()
 from fastapi import FastAPI
 import uvicorn
 from copilotkit.integrations.fastapi import add_fastapi_endpoint
 from copilotkit import CopilotKitRemoteEndpoint, LangGraphAgent
-from langchain_hotel_agent.agent.agent import graph  # Changed to absolute import
+from langgraph_agent.agent.agent import graph  # Changed to absolute import
 
 
 app = FastAPI()
