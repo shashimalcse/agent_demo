@@ -1,0 +1,232 @@
+"use client"
+import { useState, FormEvent, useRef, useEffect } from "react"
+import { Send } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { PreferencesWidget, type Preferences } from "./chat/preferences-widget"
+import { RoomList } from "./chat/room-list"
+
+type Response = {
+  chat_response: string
+  tool_response: any
+}
+
+type AgentMessage = {
+  id: string
+  response: Response
+  frontend_state: string
+}
+
+type Message = {
+  id: string
+  content: string
+  isUser: boolean
+  isLoading?: boolean
+  toolResponse?: AgentMessage
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex space-x-2 p-2">
+      <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]"></div>
+      <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]"></div>
+      <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground"></div>
+    </div>
+  )
+}
+
+export function ChatComponent() {
+  const [messages, setMessages] = useState<Message[]>([
+  ])
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (!input.trim() || isLoading) return
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: input,
+      isUser: true,
+    }
+
+    const loadingMessage: Message = {
+      id: 'loading',
+      content: '',
+      isUser: false,
+      isLoading: true
+    }
+
+    setMessages((prev) => [...prev, userMessage, loadingMessage])
+    setInput("")
+    setIsLoading(true)
+
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30`
+        },
+        body: JSON.stringify({
+          message: input
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const agentMessage = await response.json() as AgentMessage
+      
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: agentMessage.response.chat_response,
+        isUser: false,
+        toolResponse: agentMessage
+      }
+
+      setMessages((prev) => prev.filter(msg => msg.id !== 'loading').concat(botMessage))
+    } catch (error) {
+      console.error("Error sending message:", error)
+      setMessages(prev => prev.filter(msg => msg.id !== 'loading').concat({
+        id: Date.now().toString(),
+        content: "Sorry, I couldn't process your message. Please try again.",
+        isUser: false
+      }))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePreferencesSubmit = async (preferences: Preferences) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: `Searching for rooms in ${preferences.location} from ${preferences.checkIn.toLocaleDateString()} to ${preferences.checkOut.toLocaleDateString()}`,
+      isUser: true,
+    }
+
+    const loadingMessage: Message = {
+      id: 'loading',
+      content: '',
+      isUser: false,
+      isLoading: true
+    }
+
+    setMessages((prev) => [...prev, userMessage, loadingMessage])
+    setIsLoading(true)
+
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30`
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const agentMessage = await response.json() as AgentMessage
+      
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: agentMessage.response.chat_response,
+        isUser: false,
+        toolResponse: agentMessage
+      }
+
+      setMessages((prev) => prev.filter(msg => msg.id !== 'loading').concat(botMessage))
+    } catch (error) {
+      console.error("Error sending preferences:", error)
+      setMessages(prev => prev.filter(msg => msg.id !== 'loading').concat({
+        id: Date.now().toString(),
+        content: "Sorry, I couldn't process your preferences. Please try again.",
+        isUser: false
+      }))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const renderToolResponse = (msg: AgentMessage) => {
+    if (msg.frontend_state === "get_preferences") {
+      return <PreferencesWidget onSubmit={handlePreferencesSubmit} />
+    } else if (msg.frontend_state === "show_rooms" && msg.response.tool_response?.rooms) {
+      // Access the rooms directly from the tool_response object
+      return <RoomList rooms={msg.response.tool_response.rooms} />
+    }
+    return null
+  }
+
+  return (
+    <Card className="flex h-full w-full flex-col rounded-none border-0">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 px-4 md:px-6">
+        <div className="flex items-center gap-4">
+          <div>
+            <h4 className="font-semibold">Hotel Support</h4>
+            <p className="text-sm text-muted-foreground">Online</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 space-y-4 overflow-auto px-4 md:px-6">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.isUser ? "flex-row-reverse" : ""} gap-3`}
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>{msg.isUser ? "U" : "HS"}</AvatarFallback>
+            </Avatar>
+            <div className={`rounded-lg ${msg.isUser ? "bg-orange-500" : "bg-muted"} p-3 max-w-[80%]`}>
+              {msg.isLoading ? (
+                <TypingIndicator />
+              ) : (
+                <>
+                  <p className={`text-sm ${msg.isUser ? "text-primary-foreground" : ""}`}>
+                    {msg.content}
+                  </p>
+                  {!msg.isUser && msg.toolResponse && renderToolResponse(msg.toolResponse)}
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </CardContent>
+      <CardFooter className="px-4 md:px-6">
+        <form onSubmit={handleSubmit} className="flex w-full items-center gap-3">
+          <Input
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" disabled={isLoading}>
+            <Send className="h-4 w-4" />
+            <span className="sr-only">Send message</span>
+          </Button>
+        </form>
+      </CardFooter>
+    </Card>
+  )
+}
+

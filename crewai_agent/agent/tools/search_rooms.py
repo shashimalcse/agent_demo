@@ -1,0 +1,39 @@
+from datetime import date
+from typing import Type
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field
+import requests
+
+from schemas import CrewOutput, Response
+
+class SearchRoomsToolInput(BaseModel):
+    """Input schema for SearchRoomTool."""
+    check_in: date = Field(..., description="Check-in date")
+    check_out: date = Field(..., description="Check-out date")
+    location: str = Field(..., description="Location of the hotel")
+
+class SearchRoomsTool(BaseTool):
+    name: str = "SearchRoomsTool"
+    description: str = "Search for hotel rooms within check-in and check-out dates."
+    args_schema: Type[BaseModel] = SearchRoomsToolInput
+
+    def _run(self, check_in: date, check_out: date, location: str) -> str:
+        params = {}
+        if check_in is not None:
+            params['check_in'] = check_in
+        if check_out is not None:
+            params['check_out'] = check_out
+        if location is not None:
+            params['location'] = location            
+            
+        api_response = requests.get('http://localhost:8001/rooms/search/', params=params)
+        rooms_data = api_response.json()
+        
+        # Convert list response to dictionary format
+        response_dict = {"rooms": rooms_data} if isinstance(rooms_data, list) else rooms_data
+        
+        response = Response(
+            chat_response=f"Searched rooms for check_in : {check_in} , check_out {check_out}, location {location}", 
+            tool_response=response_dict
+        )
+        return CrewOutput(response=response, frontend_state="show_rooms").model_dump_json()
