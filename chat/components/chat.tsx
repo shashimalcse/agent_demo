@@ -220,7 +220,7 @@ export function ChatComponent() {
             disabled={isLoading}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={isLoading}>
+          <Button type="submit" size="icon" disabled={isLoading} className="bg-orange-500">
             <Send className="h-4 w-4" />
             <span className="sr-only">Send message</span>
           </Button>

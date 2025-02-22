@@ -85,7 +85,7 @@ def search_rooms(
     
     return search_results
 
-@app.post("/bookings/", response_model=Booking)
+@app.post("/bookings", response_model=Booking)
 def book_room(booking: BookingCreate):
     global last_booking_id
     

@@ -13,7 +13,7 @@ export default function ChatButton() {
           <MessageCircle className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" style={{ maxWidth: '25vw' }}>
+      <SheetContent side="right" style={{ maxWidth: '30vw' }}>
         <div className="h-full w-full">
           <ChatComponent />
         </div>

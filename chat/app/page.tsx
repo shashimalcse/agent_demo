@@ -3,7 +3,8 @@ import BookingWidget from "@/components/booking-widget"
 import ChatButton from "@/components/chat-button"
 import { NavigationMenu } from "@/components/navigation-menu"
 
-export default function Home() {
+export default async function Home() {
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
