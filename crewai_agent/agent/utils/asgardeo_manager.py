@@ -7,18 +7,15 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-class ChatThread(BaseModel):
-    thread_id: str
-    user_id: str
-
 class AuthToken(BaseModel):
     id: str
     scopes: List[str]
     token: str
 
 class AuthCode(BaseModel):
+    state: str
     user_id: str
-    code: str
+    code: Optional[str]
     scopes: List[str]
 
 class AsgardeoManager:
@@ -36,6 +33,8 @@ class AsgardeoManager:
 
         self.auth_codes: Dict[str, AuthCode] = {}  # Store AuthCode by session_id
         self.auth_tokens: Dict[str, AuthToken] = {}  # Store AuthToken by token_id
+        self.thread_user_map: Dict[str, str] = {}  # Store user_id against thread_id
+        self.state_mapping: Dict[str, AuthCode] = {}
 
     def store_auth_code(self, user_id: str, code: str):
             """Store authentication code and user_id"""
@@ -58,6 +57,7 @@ class AsgardeoManager:
 
                 scopes_str = " ".join(scopes)
                 nonce = str(uuid.uuid4())[:16]
+                state = str(uuid.uuid4())
 
                 authorization_url = (
                     f"{self.authorize_url}?"
@@ -66,22 +66,22 @@ class AsgardeoManager:
                     f"scope={scopes_str}&" 
                     f"response_type=code&"
                     f"response_mode=query&"
-                    f"state={nonce}&"
+                    f"state={state}&"
                     f"nonce={nonce}"
                 )
-
+                auth_code = AuthCode(state=state, user_id=user_id, code=None, scopes=scopes)
+                self.state_mapping[state] = auth_code
                 # Store auth code entry
-                auth_code = AuthCode(user_id=user_id, code=None, scopes=scopes)
                 self.auth_codes[self.get_token_key(user_id, scopes)] = auth_code
                 return authorization_url
             except Exception as e:
                 raise
 
-    def fetch_user_token(self, user_id: str) -> str:
+    def fetch_user_token(self, state: str) -> str:
         """
         Exchange authorization code for access token
         """
-        code_entry:AuthCode = self.get_auth_code(user_id)
+        code_entry:AuthCode = self.state_mapping.get(state)
         if not code_entry:
             raise ValueError("No auth code found for user")
         try:
@@ -97,7 +97,12 @@ class AsgardeoManager:
                 }
             )
             data = response.json()
-            return data.get("access_token")
+            access_token = data.get("access_token")
+            token_key = self.get_token_key(code_entry.user_id, code_entry.scopes)
+            print(token_key)
+            token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=access_token)
+            self.auth_tokens[token_key] = token
+            return access_token
         except Exception as e:
             print(e)
             raise
@@ -138,19 +143,29 @@ class AsgardeoManager:
         Get valid m2m token.
         """
         token_key = self.get_token_key(user_id, scopes)
-        token_entry:AuthToken = self.auth_tokens[token_key]
+        token_entry:AuthToken = self.auth_tokens.get(token_key)
         if token_entry:
             return token_entry.token
-        fetch_token = self.get_user_token(scopes)
-        token = AuthToken(id=user_id, scopes=scopes, token=fetch_token)
-        self.auth_tokens[token_key] = token
-        return fetch_token
+        return None
     
     def get_token_key(self, id: str, scopes: List[str]) -> str:
         """
         Get token key from id and scopes
         """
         return id+'_'+"_".join(scopes)
+    
+    def store_user_id_against_thread_id(self, thread_id: str, user_id: str):
+        """
+        Store user_id against thread_id
+        """
+        self.thread_user_map[thread_id] = user_id
+
+    def get_user_id_from_thread_id(self, thread_id: str) -> str:
+        """
+        Get user_id from thread_id
+        """
+        return self.thread_user_map.get(thread_id)    
+        
 
 
 asgardeo_manager = AsgardeoManager()

@@ -43,7 +43,7 @@ async def search_rooms(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     room_type: Optional[str] = None,
-    dependencies=[Depends(Security(validate_scopes, scopes=["rooms:read"]))]
+    dependencies=[Depends(Security(validate_scopes, scopes=["read_rooms"]))]
 ):
     search_results = []
     
@@ -92,7 +92,7 @@ async def search_rooms(
 @app.post("/bookings", response_model=Booking)
 async def book_room(
     booking: BookingCreate,
-    dependencies=[Depends(Security(validate_scopes, scopes=["bookings:write"]))]
+    dependencies=[Depends(Security(validate_scopes, scopes=["create_bookings"]))]
 ):
     global last_booking_id
     

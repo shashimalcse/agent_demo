@@ -33,7 +33,7 @@ class SearchRoomsTool(BaseTool):
             params['location'] = location     
 
         try: 
-            token = asgardeo_manager.get_app_token(["rooms:read"])
+            token = asgardeo_manager.get_app_token(["read_rooms"])
         except Exception as e:
             raise
 
@@ -45,10 +45,9 @@ class SearchRoomsTool(BaseTool):
         rooms_data = api_response.json()
         
         # Convert list response to dictionary format
-        response_dict = {"rooms": rooms_data} if isinstance(rooms_data, list) else rooms_data
-        
+        response_dict = {"rooms": rooms_data, "check_in": check_in, "check_out": check_out} if isinstance(rooms_data, list) else rooms_data
         response = Response(
-            chat_response=f"Searched rooms for check_in : {check_in} , check_out {check_out}, location {location}", 
+            chat_response=None, 
             tool_response=response_dict
         )
         return CrewOutput(response=response, frontend_state="show_rooms").model_dump_json()

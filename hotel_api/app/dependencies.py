@@ -35,6 +35,3 @@ def validate_scopes(
                 )
     except JWTError:
         raise credentials_exception
-
-# Usage in routes:
-# @app.get("/protected", dependencies=[Depends(Security(validate_scopes, scopes=["read:items"]))])

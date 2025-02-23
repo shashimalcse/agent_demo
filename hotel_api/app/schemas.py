@@ -16,7 +16,7 @@ class Room(BaseModel):
     is_available: bool
 
 class BookingCreate(BaseModel):
-    user_id: int
+    user_id: str
     hotel_id: int
     room_id: int
     check_in: date
@@ -24,7 +24,7 @@ class BookingCreate(BaseModel):
 
 class Booking(BaseModel):
     id: int
-    user_id: int
+    user_id: str
     hotel_id: int
     room_id: int
     check_in: date
@@ -32,7 +32,7 @@ class Booking(BaseModel):
     total_price: float
 
 class UserLoyalty(BaseModel):
-    user_id: int
+    user_id: str
     loyalty_points: int
 
 class ChatRequest(BaseModel):

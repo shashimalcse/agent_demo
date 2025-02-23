@@ -6,12 +6,27 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { PreferencesWidget, type Preferences } from "./chat/preferences-widget"
-import { RoomList } from "./chat/room-list"
+import { Room, RoomList } from "./chat/room-list"
 import { useSession } from "next-auth/react"
+import { AuthorizeButton } from "./chat/authorize-button"
+import { LoadingIndicator } from "./chat/loading-indicator"
+
+type SelectedRoom = {
+  hotel_id: string
+  room_id: string
+  check_in: string
+  check_out: string
+}
 
 type Response = {
   chat_response: string
-  tool_response: any
+  tool_response: {
+    rooms?: Room[]
+    check_in?: string
+    check_out?: string
+    selected_room?: SelectedRoom
+    authorization_url?: string
+  }
 }
 
 type AgentMessage = {
@@ -25,17 +40,8 @@ type Message = {
   content: string
   isUser: boolean
   isLoading?: boolean
+  loadingAction?: 'searching' | 'booking' | 'default'
   toolResponse?: AgentMessage
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex space-x-2 p-2">
-      <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]"></div>
-      <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]"></div>
-      <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground"></div>
-    </div>
-  )
 }
 
 export function ChatComponent() {
@@ -69,7 +75,8 @@ export function ChatComponent() {
       id: 'loading',
       content: '',
       isUser: false,
-      isLoading: true
+      isLoading: true,
+      loadingAction: 'default'
     }
 
     setMessages((prev) => [...prev, userMessage, loadingMessage])
@@ -117,20 +124,17 @@ export function ChatComponent() {
   }
 
   const handlePreferencesSubmit = async (preferences: Preferences) => {
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: `Searching for rooms in ${preferences.location} from ${preferences.checkIn.toLocaleDateString()} to ${preferences.checkOut.toLocaleDateString()}`,
-      isUser: true,
-    }
+    const message = `Searching for rooms in ${preferences.location} from ${preferences.checkIn.toLocaleDateString()} to ${preferences.checkOut.toLocaleDateString()}`
 
     const loadingMessage: Message = {
       id: 'loading',
       content: '',
       isUser: false,
-      isLoading: true
+      isLoading: true,
+      loadingAction: 'searching'
     }
 
-    setMessages((prev) => [...prev, userMessage, loadingMessage])
+    setMessages((prev) => [...prev, loadingMessage])
     setIsLoading(true)
 
     try {
@@ -141,7 +145,7 @@ export function ChatComponent() {
           "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30`
         },
         body: JSON.stringify({
-          message: userMessage.content,
+          message: message,
         })
       })
 
@@ -171,12 +175,143 @@ export function ChatComponent() {
     }
   }
 
+  const handleBookRoom = async (room: Room, checkIn: string, checkOut:string) => {
+    const bookingMessage = `I would like to book room id : ${room.room_number} at hotel id : ${room.hotel_id} from ${checkIn} to ${checkOut}`;
+  
+    
+    const loadingMessage: Message = {
+      id: 'loading',
+      content: '',
+      isUser: false,
+      isLoading: true,
+      loadingAction: 'booking'
+    }
+  
+    setMessages((prev) => [...prev, loadingMessage])
+    setIsLoading(true)
+  
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.accessToken}`,
+          "ThreadId": threadId
+        },
+        body: JSON.stringify({
+          message: bookingMessage,
+          threadId: threadId
+        })
+      })
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+  
+      const agentMessage = await response.json() as AgentMessage
+  
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: agentMessage.response.chat_response,
+        isUser: false,
+        toolResponse: agentMessage
+      }
+  
+      setMessages((prev) => prev.filter(msg => msg.id !== 'loading').concat(botMessage))
+    } catch (error) {
+      console.error("Error booking room:", error)
+      setMessages(prev => prev.filter(msg => msg.id !== 'loading').concat({
+        id: Date.now().toString(),
+        content: "Sorry, I couldn't process your booking request. Please try again.",
+        isUser: false
+      }))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBookRoomRetry = async (room: SelectedRoom, checkIn: string, checkOut:string) => {
+    const bookingMessage = `I would like to book room id : ${room.room_number} at hotel id : ${room.hotel_id} from ${checkIn} to ${checkOut}`;
+    
+    const loadingMessage: Message = {
+      id: 'loading',
+      content: '',
+      isUser: false,
+      isLoading: true,
+      loadingAction: 'booking'
+    }
+  
+    setMessages((prev) => [...prev, loadingMessage])
+    setIsLoading(true)
+  
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.accessToken}`,
+          "ThreadId": threadId
+        },
+        body: JSON.stringify({
+          message: bookingMessage,
+          threadId: threadId
+        })
+      })
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+  
+      const agentMessage = await response.json() as AgentMessage
+  
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: agentMessage.response.chat_response,
+        isUser: false,
+        toolResponse: agentMessage
+      }
+  
+      setMessages((prev) => prev.filter(msg => msg.id !== 'loading').concat(botMessage))
+    } catch (error) {
+      console.error("Error booking room:", error)
+      setMessages(prev => prev.filter(msg => msg.id !== 'loading').concat({
+        id: Date.now().toString(),
+        content: "Sorry, I couldn't process your booking request. Please try again.",
+        isUser: false
+      }))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const renderToolResponse = (msg: AgentMessage) => {
     if (msg.frontend_state === "get_preferences") {
       return <PreferencesWidget onSubmit={handlePreferencesSubmit} />
     } else if (msg.frontend_state === "show_rooms" && msg.response.tool_response?.rooms) {
-      // Access the rooms directly from the tool_response object
-      return <RoomList rooms={msg.response.tool_response.rooms} />
+      return (
+        <RoomList 
+          rooms={msg.response.tool_response.rooms} 
+          checkIn={msg.response.tool_response.check_in}
+          checkOut={msg.response.tool_response.check_out}
+          onBookRoom={handleBookRoom}
+        />
+      )
+    } else if (msg.frontend_state === "unauthorize" && msg.response.tool_response?.authorization_url) {
+      const { selected_room, authorization_url, check_in, check_out } = msg.response.tool_response
+      return (
+        <AuthorizeButton 
+          authorizationUrl={authorization_url} 
+          onContinueBooking={() => {
+            if (selected_room) {
+              handleBookRoomRetry(
+                selected_room,
+                check_in,
+                check_out
+              )
+            }
+          }}
+        />
+      )
     }
     return null
   }
@@ -202,7 +337,7 @@ export function ChatComponent() {
             </Avatar>
             <div className={`rounded-lg ${msg.isUser ? "bg-orange-500" : "bg-muted"} p-3 max-w-[80%]`}>
               {msg.isLoading ? (
-                <TypingIndicator />
+                <LoadingIndicator action={msg.loadingAction} />
               ) : (
                 <>
                   <p className={`text-sm ${msg.isUser ? "text-primary-foreground" : ""}`}>

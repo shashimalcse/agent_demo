@@ -23,7 +23,7 @@ export function NavigationMenu() {
       </Link>
       <div className="flex items-center space-x-2">
         {!session && (
-          <Button onClick={() => signIn("asgardeo", { callbackUrl: "/" })} variant="ghost">
+          <Button onClick={() => signIn("asgardeo", { callbackUrl: "/chat" })} variant="ghost">
             Sign in
           </Button>
         )}

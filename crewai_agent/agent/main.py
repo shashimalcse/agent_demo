@@ -10,6 +10,8 @@ from pydantic import BaseModel
 import jwt
 from jwt.exceptions import InvalidTokenError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from utils.asgardeo_manager import AuthCode, asgardeo_manager
 
 load_dotenv()
 app = FastAPI(title="LLM Chat API")
@@ -66,17 +68,28 @@ async def chat(
     try:
         user_message = request.message
         thread_id = ThreadID or request.threadId
-        
+        if not asgardeo_manager.get_user_id_from_thread_id(thread_id):
+            asgardeo_manager.store_user_id_against_thread_id(thread_id, user_id)
         if thread_id not in chat_histories:
             chat_histories[thread_id] = ChatHistory()
-
+        
         chat_history = chat_histories[thread_id]
         chat_history.add_user_message(user_message)
-
         messages = [
-            {"role": "system", "content": "You are a helpful assistant. Provide a self-contained question that incorporates all relevant context from the conversation. Do not try to answer the user message. You just have to rephrase the current user query if it is missing any context. Do it by referring to the history only."}
+            {"role": "system", 
+             "content": (
+                "You are a helpful writing assistant. "
+                "Your only task is to refine and polish the user's message using correct grammar, "
+                "spelling, and clarity. If the user’s message references earlier context, incorporate "
+                "that from the conversation history to make the message self-contained. "
+                "Do not answer or solve the user's query. "
+                "Do not provide additional commentary or explanation. "
+                "Simply return the polished version of the user's message."
+                )
+            }
         ] + chat_history.get_messages()
         response = model.invoke(messages)
+        print(response)
         crew_response = create_crew(response, thread_id)
         crew_dict = crew_response.to_dict()
         chat_response = crew_dict.get('response', {})
@@ -90,6 +103,23 @@ async def chat(
         return ChatResponse(response=response, frontend_state=frontend_state)
     except Exception as e:
         print(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/callback")
+async def callback(
+    code: str,
+    state: str,
+):
+    try:
+        auth_code: AuthCode = asgardeo_manager.state_mapping.get(state)
+        if not auth_code:
+            raise HTTPException(status_code=400, detail="Invalid state")
+        auth_code.code = code
+        asgardeo_manager.state_mapping[state] = auth_code
+        token = asgardeo_manager.fetch_user_token(state)
+        print(token)
+        return HTMLResponse(content="<html><body><script>window.location.href = 'http://localhost:3000/auth_success';</script></body></html>", status_code=200)
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")

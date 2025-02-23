@@ -2,6 +2,7 @@ import os
 from crewai import Agent, Task, Crew, LLM
 from dotenv import load_dotenv
 from schemas import CrewOutput
+from tools.book_rooms import BookRoomsTool
 from tools.get_preferences import GetUserPreferencesTool
 from tools.search_rooms import SearchRoomsTool
 
@@ -13,11 +14,7 @@ def create_crew(question, thread_id: str = None):
     hotel_agent = Agent(
         role='Hotel Assistant Agent',
         goal=(
-            "Answer the given question using your tools without modifying the question itself. "
-            "Until the user explicitly asks to book a room, share information about Asgardeo Hotel and its services. "
-            "If any tool returns one of the states ['get_preferences', 'show_rooms'], indicate that in your response. "
-            "You are allowed to modify the chat_response to communicate with the user. "
-            "Do not include detailed room information in the chat_response; provide such details in the tool_response instead."
+            "Answer the given question using your tools without modifying the question itself."
         ),
         backstory=(
             "You are the Hotel Assistant Agent for Asgardeo Hotel. You have access to a language model "
@@ -32,16 +29,19 @@ def create_crew(question, thread_id: str = None):
         ),
         verbose=True,
         llm=llm,
-        tools=[GetUserPreferencesTool(), SearchRoomsTool(thread_id)]
+        tools=[GetUserPreferencesTool(), SearchRoomsTool(thread_id), BookRoomsTool(thread_id)]
     )
     agent_task = Task(
         description=(
             f"Answer the question: {question}. "
-            "Do not modify the question in any way. "
-            "Until the user explicitly asks to book a room, share information about Asgardeo Hotel and its services and do not use any tool. You can return empty as frontend_state."
-            "If the check-in date, check-out date, or location are not provided, invoke the 'GetUserPreferencesTool' tool. "
-            "Otherwise, skip the 'get_preferences' tool and invoke the 'SearchRoomsTool' tool. "
-            "Do not include tool response like room details in the chat_response provide such details in the tool_response instead. Use chat_response reponse as a way to communicate with the user."
+            "1. If the user is asking only for general or non-room-related hotel information, respond with relevant details from your backstory. Do not use any tools in that scenario.\n"
+            "2. If the user expresses interest in checking room availability, rates, or anything that requires room details, follow these steps:\n"
+            "   - Check if location, check-in date, and check-out date are provided.\n"
+            "   - If any of these are missing, call 'GetUserPreferencesTool' once to collect them.\n"
+            "   - If all preferences are known, call 'SearchRoomsTool' to retrieve available rooms. (do not include room list details in 'chat_response'. Put some nice message about the hotel and say these are the availble rooms only. room details are return with tool_response)\n"
+            "3. If the user explicitly says they want to book a room with details, call 'BookRoomsTool'.\n"
+            "4. If 'BookRoomsTool' returns 'unauthorize', prompt the user to authenticate using the URL in 'tool_response' (do not include the URL in your 'chat_response').\n"
+            "Note: Do not include any information like room list, selected rooms auth URLs in the chat_response. The tool_response is for internal usage. Always use chat_response to give a message to user about the task.\n"
         ),
         agent=hotel_agent,
         expected_output=(
