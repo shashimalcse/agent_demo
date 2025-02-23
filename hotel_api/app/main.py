@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi.security import SecurityScopes
 from typing import List, Optional
 from datetime import date
 from .schemas import *
+from .dependencies import validate_scopes
+from .constants import SCOPES
 
 app = FastAPI()
 
@@ -26,20 +29,21 @@ bookings_data = {}
 last_booking_id = 0
 
 @app.get("/hotels/", response_model=List[Hotel])
-def list_hotels():
+async def list_hotels(dependencies=[Depends(Security(validate_scopes, scopes=["hotels:read"]))]):
     return [
         Hotel(id=hid, **hotel_data)
         for hid, hotel_data in hotels_data.items()
     ]
 
 @app.get("/rooms/search", response_model=List[RoomSearchResult])
-def search_rooms(
+async def search_rooms(
     check_in: date,
     check_out: date,
     location: str,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
-    room_type: Optional[str] = None
+    room_type: Optional[str] = None,
+    dependencies=[Depends(Security(validate_scopes, scopes=["rooms:read"]))]
 ):
     search_results = []
     
@@ -86,7 +90,10 @@ def search_rooms(
     return search_results
 
 @app.post("/bookings", response_model=Booking)
-def book_room(booking: BookingCreate):
+async def book_room(
+    booking: BookingCreate,
+    dependencies=[Depends(Security(validate_scopes, scopes=["bookings:write"]))]
+):
     global last_booking_id
     
     # Validate hotel exists
@@ -124,7 +131,10 @@ def book_room(booking: BookingCreate):
     return Booking(id=last_booking_id, **bookings_data[last_booking_id])
 
 @app.get("/users/{user_id}/bookings", response_model=List[Booking])
-def get_user_bookings(user_id: int):
+async def get_user_bookings(
+    user_id: int,
+    dependencies=[Depends(Security(validate_scopes, scopes=["bookings:read"]))]
+):
     return [
         Booking(id=bid, **booking)
         for bid, booking in bookings_data.items()
@@ -132,6 +142,9 @@ def get_user_bookings(user_id: int):
     ]
 
 @app.get("/users/{user_id}/loyalty", response_model=UserLoyalty)
-def get_user_loyalty(user_id: int):
+async def get_user_loyalty(
+    user_id: int,
+    dependencies=[Depends(Security(validate_scopes, scopes=["loyality:read"]))]
+):
     # Return mock loyalty data
     return {"user_id": user_id, "loyalty_points": 1200}

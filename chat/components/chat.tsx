@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { PreferencesWidget, type Preferences } from "./chat/preferences-widget"
 import { RoomList } from "./chat/room-list"
+import { useSession } from "next-auth/react"
 
 type Response = {
   chat_response: string
@@ -38,6 +39,8 @@ function TypingIndicator() {
 }
 
 export function ChatComponent() {
+  const { data: session } = useSession()
+  const [threadId, setThreadId] = useState<string>(Date.now().toString())
   const [messages, setMessages] = useState<Message[]>([
   ])
   const [input, setInput] = useState("")
@@ -76,12 +79,14 @@ export function ChatComponent() {
     try {
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30`
+          "Authorization": `Bearer ${session?.accessToken}`,
+          "ThreadId": threadId
         },
         body: JSON.stringify({
-          message: input
+          message: input,
+          threadId: threadId
         })
       })
 
@@ -90,7 +95,7 @@ export function ChatComponent() {
       }
 
       const agentMessage = await response.json() as AgentMessage
-      
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: agentMessage.response.chat_response,
@@ -131,7 +136,7 @@ export function ChatComponent() {
     try {
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30`
         },
@@ -145,7 +150,7 @@ export function ChatComponent() {
       }
 
       const agentMessage = await response.json() as AgentMessage
-      
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: agentMessage.response.chat_response,

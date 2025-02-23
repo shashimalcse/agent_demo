@@ -8,7 +8,7 @@ from tools.search_rooms import SearchRoomsTool
 load_dotenv()
 
 
-def create_crew(question):
+def create_crew(question, thread_id: str = None):
     llm = LLM(model='azure/gpt4-o')
     hotel_agent = Agent(
         role='Hotel Assistant Agent',
@@ -32,7 +32,7 @@ def create_crew(question):
         ),
         verbose=True,
         llm=llm,
-        tools=[GetUserPreferencesTool(), SearchRoomsTool()]
+        tools=[GetUserPreferencesTool(), SearchRoomsTool(thread_id)]
     )
     agent_task = Task(
         description=(

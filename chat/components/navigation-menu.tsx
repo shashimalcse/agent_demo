@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button"
 
 export function NavigationMenu() {
   const { data: session } = useSession()
-
   return (
     <div className="w-screen mx-auto px-4 md:px-6 lg:px-8 flex h-16 items-center justify-between">
       <Link href="/" className="font-serif text-lg md:text-xl hover:opacity-80 transition-opacity">

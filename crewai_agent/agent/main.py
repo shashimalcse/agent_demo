@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
 from crew import create_crew
 from utils.chat_history import ChatHistory
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import jwt
@@ -31,14 +31,10 @@ model = AzureChatOpenAI(model_version='gpt-4o-2024-11-20',
                                     azure_deployment=os.environ["DEPLOYMENT_NAME"],
                                     api_version='2024-08-01-preview')
 
-# JWT configuration
-JWT_SECRET = "a-string-secret-at-least-256-bits-long"  # Move this to environment variables in production
-JWT_ALGORITHM = "HS256"
-
 def get_user_from_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         token = credentials.credentials
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, options={"verify_signature": False})
         return payload.get("sub")
     except InvalidTokenError:
         raise HTTPException(
@@ -51,6 +47,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    threadId: Optional[str] = None
 
 class Response(BaseModel):
     chat_response: Optional[str] = None
@@ -61,20 +58,26 @@ class ChatResponse(BaseModel):
     frontend_state: str
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, user_id: str = Depends(get_user_from_token)):
+async def chat(
+    request: ChatRequest, 
+    user_id: str = Depends(get_user_from_token),
+    ThreadID: Optional[str] = Header(None)
+):
     try:
         user_message = request.message
-        if user_id not in chat_histories:
-            chat_histories[user_id] = ChatHistory()
+        thread_id = ThreadID or request.threadId
+        
+        if thread_id not in chat_histories:
+            chat_histories[thread_id] = ChatHistory()
 
-        chat_history = chat_histories[user_id]
+        chat_history = chat_histories[thread_id]
         chat_history.add_user_message(user_message)
 
         messages = [
             {"role": "system", "content": "You are a helpful assistant. Provide a self-contained question that incorporates all relevant context from the conversation. Do not try to answer the user message. You just have to rephrase the current user query if it is missing any context. Do it by referring to the history only."}
         ] + chat_history.get_messages()
         response = model.invoke(messages)
-        crew_response = create_crew(response)
+        crew_response = create_crew(response, thread_id)
         crew_dict = crew_response.to_dict()
         chat_response = crew_dict.get('response', {})
         frontend_state = crew_dict.get('frontend_state', {})
