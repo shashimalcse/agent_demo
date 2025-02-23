@@ -1,12 +1,20 @@
 from fastapi import FastAPI, HTTPException, Depends, Security
-from fastapi.security import SecurityScopes
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from datetime import date
 from .schemas import *
-from .dependencies import validate_scopes
+from .dependencies import TokenData, validate_token
 from .constants import SCOPES
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "https://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # In-memory data stores
 hotels_data = {
@@ -29,7 +37,9 @@ bookings_data = {}
 last_booking_id = 0
 
 @app.get("/hotels/", response_model=List[Hotel])
-async def list_hotels(dependencies=[Depends(Security(validate_scopes, scopes=["hotels:read"]))]):
+async def list_hotels(
+    token_data: TokenData = Security(validate_token, scopes=["hotels:read"])
+):
     return [
         Hotel(id=hid, **hotel_data)
         for hid, hotel_data in hotels_data.items()
@@ -43,7 +53,7 @@ async def search_rooms(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     room_type: Optional[str] = None,
-    dependencies=[Depends(Security(validate_scopes, scopes=["read_rooms"]))]
+    token_data: TokenData = Security(validate_token, scopes=["readrooms"])
 ):
     search_results = []
     
@@ -92,7 +102,7 @@ async def search_rooms(
 @app.post("/bookings", response_model=Booking)
 async def book_room(
     booking: BookingCreate,
-    dependencies=[Depends(Security(validate_scopes, scopes=["create_bookings"]))]
+    token_data: TokenData = Security(validate_token, scopes=["createbookings"])
 ):
     global last_booking_id
     
@@ -132,8 +142,8 @@ async def book_room(
 
 @app.get("/users/{user_id}/bookings", response_model=List[Booking])
 async def get_user_bookings(
-    user_id: int,
-    dependencies=[Depends(Security(validate_scopes, scopes=["bookings:read"]))]
+    user_id: str,
+    token_data: TokenData = Security(validate_token, scopes=["read_bookings"])
 ):
     return [
         Booking(id=bid, **booking)
@@ -144,7 +154,7 @@ async def get_user_bookings(
 @app.get("/users/{user_id}/loyalty", response_model=UserLoyalty)
 async def get_user_loyalty(
     user_id: int,
-    dependencies=[Depends(Security(validate_scopes, scopes=["loyality:read"]))]
+    token_data: TokenData = Security(validate_token, scopes=["read_loyalty"])
 ):
     # Return mock loyalty data
     return {"user_id": user_id, "loyalty_points": 1200}

@@ -33,7 +33,8 @@ class SearchRoomsTool(BaseTool):
             params['location'] = location     
 
         try: 
-            token = asgardeo_manager.get_app_token(["read_rooms"])
+            token = asgardeo_manager.get_app_token(["readrooms"])
+            print(token)
         except Exception as e:
             raise
 

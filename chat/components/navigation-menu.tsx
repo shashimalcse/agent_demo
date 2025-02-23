@@ -13,13 +13,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 export function NavigationMenu() {
   const { data: session } = useSession()
+  const router = useRouter()
+
   return (
     <div className="w-screen mx-auto px-4 md:px-6 lg:px-8 flex h-16 items-center justify-between">
-      <Link href="/" className="font-serif text-lg md:text-xl hover:opacity-80 transition-opacity">
-        Hotel Asgardeo
+      <Link href="/" className="font-serif text-2xl md:text-xl hover:opacity-80 transition-opacity">
+          Hotel Asgardeo
       </Link>
       <div className="flex items-center space-x-2">
         {!session && (
@@ -45,7 +48,7 @@ export function NavigationMenu() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/profile')}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>

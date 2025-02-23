@@ -8,7 +8,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <NavigationMenu />
       </header>
 

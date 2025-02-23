@@ -29,7 +29,7 @@ class BookRoomsTool(BaseTool):
         try:
             # Get access token
             user_id = asgardeo_manager.get_user_id_from_thread_id(self.thread_id)
-            access_token = asgardeo_manager.get_user_token(user_id, ["openid"])
+            access_token = asgardeo_manager.get_user_token(user_id, ["openid", "createbookings"])
             if not access_token:
                 response = Response(
                     chat_response="Please authenticate to book a room",
@@ -40,7 +40,7 @@ class BookRoomsTool(BaseTool):
                             "check_in": check_in,
                             "check_out": check_out
                         },
-                        "authorization_url": asgardeo_manager.get_authorization_url(user_id, ["openid"])
+                        "authorization_url": asgardeo_manager.get_authorization_url(user_id, ["openid", "createbookings"])
                     }
                 )
                 return CrewOutput(response=response, frontend_state="unauthorize").model_dump_json()
