@@ -8,7 +8,7 @@ export function LoadingIndicator({ action = 'default' }: LoadingIndicatorProps) 
       case 'searching':
         return 'Searching for available rooms...'
       case 'booking':
-        return 'Processing your booking request...'
+        return 'Processing your request...'
       default:
         return 'Thinking...'
     }

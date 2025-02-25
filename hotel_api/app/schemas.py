@@ -4,7 +4,7 @@ from datetime import date
 class Hotel(BaseModel):
     id: int
     name: str
-    location: str
+    descption: str
     rating: float
 
 class Room(BaseModel):
@@ -26,7 +26,9 @@ class Booking(BaseModel):
     id: int
     user_id: str
     hotel_id: int
+    hotel_name: str
     room_id: int
+    room_type: str
     check_in: date
     check_out: date
     total_price: float
@@ -50,8 +52,24 @@ class RoomSearchResult(BaseModel):
     room_id: int
     hotel_id: int
     hotel_name: str
-    hotel_location: str
     hotel_rating: float
+    hotel_description: str
     room_number: str
     room_type: str
+    room_type_description: str
     price_per_night: float
+
+class RoomDetails(BaseModel):
+    room_id: int
+    room_number: str
+    room_type: str
+    room_type_description: str
+    price_per_night: float
+    total_price: float
+    hotel_id: int
+    hotel_name: str
+    hotel_description: str
+    hotel_rating: float
+    is_available: bool
+    check_in: date
+    check_out: date

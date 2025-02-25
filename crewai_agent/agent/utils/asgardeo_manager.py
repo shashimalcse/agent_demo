@@ -66,6 +66,7 @@ class AsgardeoManager:
                     f"scope={scopes_str}&" 
                     f"response_type=code&"
                     f"response_mode=query&"
+                    f"selector=calendar&"
                     f"state={state}&"
                     f"nonce={nonce}"
                 )
@@ -94,7 +95,8 @@ class AsgardeoManager:
                     "redirect_uri": self.redirect_uri,
                     "client_id": self.client_id,
                     "client_secret": self.client_secret
-                }
+                },
+                verify=False
             )
             data = response.json()
             access_token = data.get("access_token")
@@ -119,7 +121,8 @@ class AsgardeoManager:
                     "scope": " ".join(scopes),
                     "client_id": self.client_id,
                     "client_secret": self.client_secret
-                }
+                },
+                verify=False
             )
             data = response.json()
             return data.get("access_token")
@@ -134,6 +137,7 @@ class AsgardeoManager:
         if token_entry:
             return token_entry.token
         fetch_token = self.fetch_app_token(scopes)
+        print("fetch_token", fetch_token)
         token = AuthToken(id="m2m", scopes=scopes, token=fetch_token)
         self.auth_tokens[self.get_token_key("m2m", scopes)] = token
         return fetch_token

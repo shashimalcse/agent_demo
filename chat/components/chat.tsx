@@ -10,12 +10,29 @@ import { Room, RoomList } from "./chat/room-list"
 import { useSession } from "next-auth/react"
 import { AuthorizeButton } from "./chat/authorize-button"
 import { LoadingIndicator } from "./chat/loading-indicator"
+import { BookingConfirmationCard } from "./chat/booking-confirmation-card"
 
 type SelectedRoom = {
   hotel_id: string
   room_id: string
   check_in: string
   check_out: string
+}
+
+type RoomDetails = {
+  room_id?: number
+  room_number?: string
+  room_type?: string
+  room_type_description?: string
+  price_per_night?: number
+  total_price?: number
+  hotel_id?: number
+  hotel_name?: string
+  hotel_description?: string
+  hotel_rating?: number
+  is_available?: boolean
+  check_in?: string
+  check_out?: string
 }
 
 type Response = {
@@ -26,6 +43,7 @@ type Response = {
     check_out?: string
     selected_room?: SelectedRoom
     authorization_url?: string
+    room_details?: RoomDetails
   }
 }
 
@@ -175,8 +193,8 @@ export function ChatComponent() {
     }
   }
 
-  const handleBookRoom = async (room: Room, checkIn: string, checkOut:string) => {
-    const bookingMessage = `I would like to book room id : ${room.room_number} at hotel id : ${room.hotel_id} from ${checkIn} to ${checkOut}`;
+  const handleBookConfirmation = async (room: Room, checkIn: string, checkOut:string) => {
+    const bookingMessage = `I would like this room id : ${room.room_number} at hotel id : ${room.hotel_id} from ${checkIn} to ${checkOut}. Please give me booking details before proceeding.`;
   
     
     const loadingMessage: Message = {
@@ -230,8 +248,8 @@ export function ChatComponent() {
     }
   }
 
-  const handleBookRoomRetry = async (room: SelectedRoom, checkIn: string, checkOut:string) => {
-    const bookingMessage = `I would like to book room id : ${room.room_number} at hotel id : ${room.hotel_id} from ${checkIn} to ${checkOut}`;
+  const handleBookConfirmationRetry = async (room: RoomDetails) => {
+    const bookingMessage = `Ok i am ok with booking details you provide. Lets book the room id : ${room.room_id} at hotel id : ${room.hotel_id} from ${room.check_in} to ${room.check_out}.`;
     
     const loadingMessage: Message = {
       id: 'loading',
@@ -293,26 +311,45 @@ export function ChatComponent() {
           rooms={msg.response.tool_response.rooms} 
           checkIn={msg.response.tool_response.check_in}
           checkOut={msg.response.tool_response.check_out}
-          onBookRoom={handleBookRoom}
+          onBookConfirmation={handleBookConfirmation}
         />
       )
-    } else if (msg.frontend_state === "unauthorize" && msg.response.tool_response?.authorization_url) {
-      const { selected_room, authorization_url, check_in, check_out } = msg.response.tool_response
-      return (
-        <AuthorizeButton 
-          authorizationUrl={authorization_url} 
-          onContinueBooking={() => {
-            if (selected_room) {
-              handleBookRoomRetry(
-                selected_room,
-                check_in,
-                check_out
-              )
-            }
-          }}
-        />
-      )
-    }
+    } else if (msg.frontend_state === "booking_confirmation") {
+      const { tool_response } = msg.response;
+      if (tool_response.room_details && 'room_id' in tool_response.room_details) {
+        return (
+          <BookingConfirmationCard 
+            bookingDetails={tool_response.room_details} 
+            authorizationUrl={tool_response.authorization_url} 
+            onContinueBooking={() => {
+              if (tool_response.room_details) {
+                handleBookConfirmationRetry(
+                  tool_response.room_details
+                )
+              }
+            }}
+          />
+        )
+      }
+    } 
+    
+    // else if (msg.frontend_state === "unauthorize" && msg.response.tool_response?.authorization_url) {
+    //   const { selected_room, authorization_url, check_in, check_out } = msg.response.tool_response
+    //   return (
+    //     <AuthorizeButton 
+    //       authorizationUrl={authorization_url} 
+    //       onContinueBooking={() => {
+    //         if (selected_room) {
+    //           handleBookConfirmationRetry(
+    //             selected_room,
+    //             check_in,
+    //             check_out
+    //           )
+    //         }
+    //       }}
+    //     />
+    //   )
+    // }
     return null
   }
 

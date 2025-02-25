@@ -11,7 +11,7 @@ class SearchRoomsToolInput(BaseModel):
     """Input schema for SearchRoomTool."""
     check_in: date = Field(..., description="Check-in date")
     check_out: date = Field(..., description="Check-out date")
-    location: str = Field(..., description="Location of the hotel")
+    name: str = Field(..., description="Name of the hotel")
 
 class SearchRoomsTool(BaseTool):
     name: str = "SearchRoomsTool"
@@ -23,18 +23,17 @@ class SearchRoomsTool(BaseTool):
         super().__init__()
         self.thread_id = thread_id
 
-    def _run(self, check_in: date, check_out: date, location: str) -> str:
+    def _run(self, check_in: date, check_out: date, name: str) -> str:
         params = {}
         if check_in is not None:
             params['check_in'] = check_in
         if check_out is not None:
             params['check_out'] = check_out
-        if location is not None:
-            params['location'] = location     
+        if name is not None:
+            params['name'] = name     
 
         try: 
-            token = asgardeo_manager.get_app_token(["readrooms"])
-            print(token)
+            token = asgardeo_manager.get_app_token(["read_rooms"])
         except Exception as e:
             raise
 

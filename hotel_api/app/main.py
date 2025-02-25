@@ -18,27 +18,33 @@ app.add_middleware(
 
 # In-memory data stores
 hotels_data = {
-    1: {"name": "Grand Hotel", "location": "Galle", "rating": 4.5},
-    2: {"name": "Beach Resort", "location": "Arugambe", "rating": 4.8}
+    1: {"name": "Asgardeo Saman Villa", "description": "Enjoy a luxurious stay at Asgardeo Saman Villas in your suite, and indulge in a delicious breakfast and your choice of lunch or dinner from our daily set menus served at the restaurant. Access exquisite facilities, including the infinity pool, Sahana Spa, gymnasium and library, as you unwind in paradise.", "rating" : 4.5},
+    2: {"name": "Asgardeo Colombo Seven", "description": "Asgardeo Colombo Seven is located in the heart of Colombo, the commercial capital of Sri Lanka and offers the discerning traveler contemporary accommodation and modern design aesthetic. Rising over the city landscape, the property boasts stunning views, a rooftop bar and pool, main restaurant, gym and spa services, as well as conference facilities.", "rating" : 4.9}
+}
+
+room_type_data = {
+    "deluxe": {"description": "The spacious rooms are defined by king size beds commanding a modern yet minimal ambience, with amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveler needs."},
+    "super_deluxe": {"description": "The super deluxe rooms are defined by king size beds commanding a modern yet minimal ambience, with a bathtub and amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveler needs."},
+    "studio": {"description": "The 1 bedroom serviced apartments spacious living areas as well as a kitchen housing a cooker, fridge, washing machine and microwave. Rooms are defined by king size beds commanding a modern yet minimal ambience, with amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveller needs."}
 }
 
 rooms_data = {
-    1: {  # Hotel 1 rooms
-        101: {"room_number": "101", "room_type": "single", "price_per_night": 99.99},
-        102: {"room_number": "102", "room_type": "double", "price_per_night": 149.50}
+    1: { 
+        101: {"room_number": "101", "room_type": "deluxe", "price_per_night": 99.99},
+        102: {"room_number": "102", "room_type": "super_deluxe", "price_per_night": 149.50}
     },
-    2: {  # Hotel 2 rooms
-        201: {"room_number": "201", "room_type": "suite", "price_per_night": 299.99},
-        202: {"room_number": "202", "room_type": "double", "price_per_night": 199.50}
+    2: {
+        201: {"room_number": "201", "room_type": "studio", "price_per_night": 299.99},
+        202: {"room_number": "202", "room_type": "super_deluxe", "price_per_night": 199.50}
     }
 }
 
 bookings_data = {}
 last_booking_id = 0
 
-@app.get("/hotels/", response_model=List[Hotel])
+@app.get("/hotels", response_model=List[Hotel])
 async def list_hotels(
-    token_data: TokenData = Security(validate_token, scopes=["hotels:read"])
+    token_data: TokenData = Security(validate_token, scopes=["read_hotels"])
 ):
     return [
         Hotel(id=hid, **hotel_data)
@@ -49,30 +55,18 @@ async def list_hotels(
 async def search_rooms(
     check_in: date,
     check_out: date,
-    location: str,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    room_type: Optional[str] = None,
-    token_data: TokenData = Security(validate_token, scopes=["readrooms"])
+    name: str,
+    token_data: TokenData = Security(validate_token, scopes=["read_rooms"])
 ):
     search_results = []
     
     for hotel_id, hotel in hotels_data.items():
         # Filter by location if specified
-        if location and location.lower() not in hotel["location"].lower():
+        if name and name.lower() not in hotel["name"].lower():
             continue
             
         hotel_rooms = rooms_data.get(hotel_id, {})
         for rid, room in hotel_rooms.items():
-            # Filter by room type if specified
-            if room_type and room_type.lower() != room["room_type"].lower():
-                continue
-                
-            # Filter by price range
-            if min_price is not None and room["price_per_night"] < min_price:
-                continue
-            if max_price is not None and room["price_per_night"] > max_price:
-                continue
             
             # Check availability for the given dates
             is_available = True
@@ -84,15 +78,19 @@ async def search_rooms(
                     break
             
             if is_available:
+                # Get room type description
+                room_type_description = room_type_data[room["room_type"]]["description"]
+                
                 search_results.append(
                     RoomSearchResult(
                         room_id=rid,
                         hotel_id=hotel_id,
                         hotel_name=hotel["name"],
-                        hotel_location=hotel["location"],
                         hotel_rating=hotel["rating"],
+                        hotel_description=hotel["description"],
                         room_number=room["room_number"],
                         room_type=room["room_type"],
+                        room_type_description=room_type_description,
                         price_per_night=room["price_per_night"]
                     )
                 )
@@ -102,7 +100,7 @@ async def search_rooms(
 @app.post("/bookings", response_model=Booking)
 async def book_room(
     booking: BookingCreate,
-    token_data: TokenData = Security(validate_token, scopes=["createbookings"])
+    token_data: TokenData = Security(validate_token, scopes=["create_bookings"])
 ):
     global last_booking_id
     
@@ -122,8 +120,11 @@ async def book_room(
                  booking.check_in >= existing_booking["check_out"])):
             raise HTTPException(status_code=400, detail="Room not available for these dates")
     
-    # Calculate total price
+    # Get hotel and room data
+    hotel = hotels_data[booking.hotel_id]
     room = rooms_data[booking.hotel_id][booking.room_id]
+    
+    # Calculate total price
     days = (booking.check_out - booking.check_in).days
     total_price = room["price_per_night"] * days
     
@@ -131,8 +132,10 @@ async def book_room(
     last_booking_id += 1
     bookings_data[last_booking_id] = {
         "hotel_id": booking.hotel_id,
+        "hotel_name": hotel["name"],
         "user_id": booking.user_id,
         "room_id": booking.room_id,
+        "room_type": room["room_type"],
         "check_in": booking.check_in,
         "check_out": booking.check_out,
         "total_price": total_price
@@ -158,3 +161,55 @@ async def get_user_loyalty(
 ):
     # Return mock loyalty data
     return {"user_id": user_id, "loyalty_points": 1200}
+
+@app.get("/rooms/{room_id}/details", response_model=RoomDetails)
+async def get_room_details(
+    room_id: int,
+    check_in: date,
+    check_out: date,
+    token_data: TokenData = Security(validate_token, scopes=["read_rooms"])
+):
+    # Find the hotel that has this room
+    hotel_id = None
+    room_data = None
+    for hid, rooms in rooms_data.items():
+        if room_id in rooms:
+            hotel_id = hid
+            room_data = rooms[room_id]
+            break
+    
+    if not room_data:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    # Check room availability
+    is_available = True
+    for booking in bookings_data.values():
+        if (booking["hotel_id"] == hotel_id and 
+            booking["room_id"] == room_id and 
+            not (check_out <= booking["check_in"] or check_in >= booking["check_out"])):
+            is_available = False
+            break
+    
+    # Calculate total price
+    days = (check_out - check_in).days
+    total_price = room_data["price_per_night"] * days
+    
+    # Get hotel and room type details
+    hotel = hotels_data[hotel_id]
+    room_type_details = room_type_data[room_data["room_type"]]
+    
+    return {
+        "room_id": room_id,
+        "room_number": room_data["room_number"],
+        "room_type": room_data["room_type"],
+        "room_type_description": room_type_details["description"],
+        "price_per_night": room_data["price_per_night"],
+        "total_price": total_price,
+        "hotel_id": hotel_id,
+        "hotel_name": hotel["name"],
+        "hotel_description": hotel["description"],
+        "hotel_rating": hotel["rating"],
+        "is_available": is_available,
+        "check_in": check_in,
+        "check_out": check_out
+    }

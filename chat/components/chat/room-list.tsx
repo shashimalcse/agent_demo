@@ -16,10 +16,10 @@ type RoomListProps = {
   rooms: Room[]
   checkIn: string
   checkOut: string
-  onBookRoom: (room: Room, checkIn: string, checkOut: string) => void
+  onBookConfirmation: (room: Room, checkIn: string, checkOut: string) => void
 }
 
-export function RoomList({ rooms, checkIn, checkOut, onBookRoom }: RoomListProps) {
+export function RoomList({ rooms, checkIn, checkOut, onBookConfirmation }: RoomListProps) {
   return (
     <div className="space-y-2 mt-4">
       {rooms.map((room) => (
@@ -41,9 +41,9 @@ export function RoomList({ rooms, checkIn, checkOut, onBookRoom }: RoomListProps
             </Button>
             <Button 
               className="bg-orange-500" 
-              onClick={() => onBookRoom(room, checkIn, checkOut)}
+              onClick={() => onBookConfirmation(room, checkIn, checkOut)}
             >
-              Book Now
+              Select
             </Button>
           </div>
         </Card>
