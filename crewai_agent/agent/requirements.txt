@@ -6,3 +6,5 @@ python-multipart>=0.0.5
 crewai 
 crewai-tools
 langchain_openai
+
+googleapiclient

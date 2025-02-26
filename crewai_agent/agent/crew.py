@@ -1,10 +1,13 @@
 import os
-from crewai import Agent, Task, Crew, LLM
+from crewai import Agent, Task, Crew, LLM, Process
 from dotenv import load_dotenv
 from schemas import CrewOutput
+from tools.add_calander import AddCalanderTool
 from tools.booking import BookingTool
 from tools.booking_confirmation import BookingConfirmationTool
-from tools.get_preferences import GetUserPreferencesTool
+from tools.fetch_chat_history import FetchChatHistoryTool
+from tools.fetch_hotels import FetchHotelsTool
+from tools.fetch_rooms import FetchRoomsTool
 from tools.search_rooms import SearchRoomsTool
 
 load_dotenv()
@@ -30,32 +33,96 @@ def create_crew(question, thread_id: str = None):
         ),
         verbose=True,
         llm=llm,
-        tools=[GetUserPreferencesTool(), SearchRoomsTool(thread_id), BookingConfirmationTool(thread_id), BookingTool(thread_id)]
+        tools=[FetchHotelsTool(thread_id), FetchRoomsTool(thread_id), SearchRoomsTool(thread_id), BookingConfirmationTool(thread_id), BookingTool(thread_id), FetchChatHistoryTool(thread_id), AddCalanderTool(thread_id)]
     )
-    agent_task = Task(
-        description=(
-            f"Answer the question: {question}. "
-            "Do not perform any actions outside the scope of the task. "
-            "1. If the user is asking only for general or non-room-related hotel information, respond with relevant details from your backstory. Do not use any tools in that scenario.\n"
-            "2. If the user expresses interest in checking room availability, rates, or anything that requires room details, follow these steps:\n"
-            "   - Check if hotel name, check-in date, and check-out date are provided.\n"
-            "   - If any of these are missing, call 'GetUserPreferencesTool' once to collect them.\n"
-            "   - If all preferences are known, call 'SearchRoomsTool' to retrieve available rooms. (Do not include room list details in 'chat_response'. Put some nice message about the hotel and say these are the availble rooms only. room details are return with tool_response)\n"
-            "   - If user select a room and confirm, call 'BookingConfirmationTool' to retrive final booking details. Make sure to keep authorization url in the tool_response. (Do not include  details in 'chat_response'. Put some nice message about the hotel and say theis is booking details. booking details are return with tool_response)\n"
-            "3. After completing the above steps and the user explicitly says they want to book a room with details, call 'BookingTool'.\n"
-            "4. If 'BookRoomsTool' returns 'unauthorize', prompt the user to authenticate using the URL in 'tool_response' (do not include the URL in your 'chat_response').\n"
-            "Note: Do not include any information like room list, selected rooms, booking confirmation details, auth URLs in the chat_response. The tool_response is for internal usage. Always use chat_response to give a message to user about the task.\n"
-        ),
+    chat_history_task = Task(
+        description=
+            f"""
+            This is the user message : **{question}**.
+            You are a specialized assistant whose current task is to generate a concise, self-contained message 
+            for an upcoming "Booking" task. You have access to a tool called ***FetchChatHistoryTool*, which can retrieve 
+            the full conversation history if needed.
+
+            Follow these steps:
+
+            1. If you already have enough context from the current conversation, proceed. If not, call ***FetchChatHistoryTool*
+            to retrieve past messages and ensure you understand the user’s intent and any relevant details.
+
+            2. Using the available conversation data (including any retrieved via ***FetchChatHistoryTool*), construct a 
+            summarized or refined message that captures all crucial information (dates, preferences, location, etc.) 
+            needed for the next booking step.
+
+            3. Do NOT attempt to solve the user's booking request yourself. Your job is only to produce a 
+            well-structured, self-contained message containing essential info from the chat so it can be passed to 
+            the "Booking" process.
+
+            4. In your chat_response:
+            - Provide the final message to be handed off, ensuring clarity and completeness.
+            - Exclude any extraneous conversation details not necessary for booking.
+
+            5. If you call ***FetchChatHistoryTool*, place the conversation transcript in tool_response only. 
+            Do NOT directly expose raw transcripts or sensitive data in chat_response. Summarize or rephrase 
+            as needed for clarity.
+
+            Important:
+            - Keep user data private. 
+            - Only use the minimal details necessary to complete the next booking step.
+            - Do not provide additional commentary or solve the booking request here. 
+            """
+        ,
         agent=hotel_agent,
         expected_output=(
-            f"The output should follow the schema below: {CrewOutput.model_json_schema()}. "
-            "Set the 'frontend_state' based on the tool's output. "
-            "You may adjust the chat_response as necessary to communicate with the user."
+            "Well structured message that captures all crucial information (dates, preferences, location, etc.) "
         ),
-        output_json=CrewOutput
+    )
+    agent_task = Task(
+        description=
+        f"""
+        You are a specialized assistant for a hotel booking service. Follow these steps:
+
+        1. If the user’s query indicates they want to find or book a hotel:
+            - Use FetchHotelsTool to retrieve a list of hotels that match the user’s preferences (destination, budget, etc.).
+            - Cross-check each returned hotel’s details against the user’s criteria (location, budget, amenities, etc.). 
+            - If no hotels match, politely inform the user. 
+            - Otherwise, summarize the suitable options.
+            - Next, use FetchRoomsTool to fetch room information for the chosen hotel(s).
+
+        2. Evaluate the room options and you should decide which room types might appeal to the user (considering budget, amenities, bed type, etc.).
+
+        3. Present a concise summary of your recommended hotel and minimum 2 rooms to the user. Use markdown to format the response for detailed information.
+
+        4. If the user selects a specific room and asks for final details (pricing breakdown, disclaimers, etc.),
+           call **BookingConfirmationTool**:
+            - Make sure the check in and check out dates are given in some point. Otherwise, ask the user for them. You should not assume the dates.
+            - This is to show the user a pre-booking summary so they can make an informed decision.
+            - Provide only a high-level summary in chat_response (e.g., "Here are your booking details, 
+                please confirm if you want to proceed").
+            - *authroization_url* and tool_Response should be sent in tool_response to the user. 
+
+        5. You must ALWAYS wait for the user's confirmation AFTER showing them the pre-booking details. 
+            It is not ethical to finalize a booking without explicit user approval (they could lose money otherwise).
+            - Therefore, only after calling **BookingConfirmationTool**, AND receiving the user’s clear "Yes, book it!", 
+            should you proceed.
+
+        5. Once the user explicitly confirms they want to finalize the booking:
+            - Call **BookingTool** to place the actual reservation.
+            - If BookingTool or any booking-related tool returns "unauthorize," prompt the user to authenticate, 
+                but do NOT expose any auth URL in chat_response (only in tool_response).
+
+        Important:
+        - Only use these tools when searching or displaying hotel/room information or booking details.
+        - Summarize recommendations in chat_response, but keep actual details. Authroization url should be sent in tool_response.
+        - Do not perform actions outside the scope of this task.
+        """
+        ,
+        agent=hotel_agent,
+        context=[chat_history_task],
+        expected_output=f"The output should follow the schema below: {CrewOutput.model_json_schema()}.",
+        output_pydantic=CrewOutput
     )
     choreo_crew = Crew(
     agents=[hotel_agent],
-    tasks=[agent_task]
+    tasks=[chat_history_task, agent_task],
+    process=Process.sequential
     )
     return choreo_crew.kickoff()

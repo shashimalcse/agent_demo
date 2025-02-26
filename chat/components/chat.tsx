@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react"
 import { AuthorizeButton } from "./chat/authorize-button"
 import { LoadingIndicator } from "./chat/loading-indicator"
 import { BookingConfirmationCard } from "./chat/booking-confirmation-card"
+import { MarkdownRenderer } from "./chat/markdown-renderer"
 
 type SelectedRoom = {
   hotel_id: string
@@ -377,9 +378,13 @@ export function ChatComponent() {
                 <LoadingIndicator action={msg.loadingAction} />
               ) : (
                 <>
-                  <p className={`text-sm ${msg.isUser ? "text-primary-foreground" : ""}`}>
-                    {msg.content}
-                  </p>
+                  {msg.isUser ? (
+                    <p className="text-sm text-primary-foreground">{msg.content}</p>
+                  ) : (
+                    <div className="text-sm">
+                      <MarkdownRenderer content={msg.content} />
+                    </div>
+                  )}
                   {!msg.isUser && msg.toolResponse && renderToolResponse(msg.toolResponse)}
                 </>
               )}

@@ -39,8 +39,6 @@ async def validate_token(
         )
 
     token_scopes = payload.get("scope", "").split()
-    print(token_scopes)
-    print(security_scopes.scopes)
     # Check that the token has ALL the required scopes
     for scope in security_scopes.scopes:
         if scope not in token_scopes:

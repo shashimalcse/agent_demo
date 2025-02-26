@@ -66,7 +66,6 @@ class AsgardeoManager:
                     f"scope={scopes_str}&" 
                     f"response_type=code&"
                     f"response_mode=query&"
-                    f"selector=calendar&"
                     f"state={state}&"
                     f"nonce={nonce}"
                 )
@@ -77,6 +76,37 @@ class AsgardeoManager:
                 return authorization_url
             except Exception as e:
                 raise
+
+    def get_google_authorization_url(self, user_id: str, scopes: List[str] = ["openid"]) -> str:
+            """
+            Generate the authorization URL for the OAuth2 flow matching the exact format provided,
+            with scopes passed as a list
+            """
+            try:
+
+                scopes_str = " ".join(scopes)
+                nonce = str(uuid.uuid4())[:16]
+                state = str(uuid.uuid4())
+
+                authorization_url = (
+                    f"{self.authorize_url}?"
+                    f"client_id={self.client_id}&"
+                    f"redirect_uri={self.redirect_uri}&"
+                    f"scope={scopes_str}&" 
+                    f"response_type=code&"
+                    f"response_mode=query&"
+                    f"share_federated_token=true&"
+                    f"federated_token_scope=Google Calendar;https://www.googleapis.com/auth/calendar.events.owned openid"
+                    f"state={state}&"
+                    f"nonce={nonce}"
+                )
+                auth_code = AuthCode(state=state, user_id=user_id, code=None, scopes=scopes)
+                self.state_mapping[state] = auth_code
+                # Store auth code entry
+                self.auth_codes[self.get_token_key(user_id, scopes)] = auth_code
+                return authorization_url
+            except Exception as e:
+                raise            
 
     def fetch_user_token(self, state: str) -> str:
         """
@@ -100,10 +130,14 @@ class AsgardeoManager:
             )
             data = response.json()
             access_token = data.get("access_token")
+            fed_token = data.get("federated_tokens")[0]
             token_key = self.get_token_key(code_entry.user_id, code_entry.scopes)
-            print(token_key)
             token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=access_token)
             self.auth_tokens[token_key] = token
+            if fed_token:
+                fed_access_token = fed_token.get("accessToken")
+                token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=fed_access_token)
+                self.auth_tokens[token_key+"_google"] = token
             return access_token
         except Exception as e:
             print(e)
@@ -137,7 +171,6 @@ class AsgardeoManager:
         if token_entry:
             return token_entry.token
         fetch_token = self.fetch_app_token(scopes)
-        print("fetch_token", fetch_token)
         token = AuthToken(id="m2m", scopes=scopes, token=fetch_token)
         self.auth_tokens[self.get_token_key("m2m", scopes)] = token
         return fetch_token
@@ -151,6 +184,16 @@ class AsgardeoManager:
         if token_entry:
             return token_entry.token
         return None
+
+    def get_user_google_token(self, user_id: str, scopes: List[str]) -> str:
+        """
+        Get valid m2m token.
+        """
+        token_key = self.get_token_key(user_id, scopes)
+        token_entry:AuthToken = self.auth_tokens.get(token_key+"_google")
+        if token_entry:
+            return token_entry.token
+        return None    
     
     def get_token_key(self, id: str, scopes: List[str]) -> str:
         """

@@ -1,8 +1,10 @@
 from datetime import date
+import os
 from typing import Type, Optional, Optional
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 import requests
+from utils.constants import FrontendState
 
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
@@ -41,7 +43,7 @@ class SearchRoomsTool(BaseTool):
             'Authorization': f'Bearer {token}'
         }
         
-        api_response = requests.get('http://localhost:8001/rooms/search/', params=params, headers=headers)
+        api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/rooms/search/", params=params, headers=headers)
         rooms_data = api_response.json()
         
         # Convert list response to dictionary format
@@ -50,4 +52,4 @@ class SearchRoomsTool(BaseTool):
             chat_response=None, 
             tool_response=response_dict
         )
-        return CrewOutput(response=response, frontend_state="show_rooms").model_dump_json()
+        return CrewOutput(response=response, frontend_state=FrontendState.NO_STATE).model_dump_json()

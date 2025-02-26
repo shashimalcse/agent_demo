@@ -3,7 +3,6 @@ from typing import Optional
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
 from crew import create_crew
-from utils.chat_history import ChatHistory
 from fastapi import FastAPI, HTTPException, Depends, Header, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -12,6 +11,7 @@ from jwt.exceptions import InvalidTokenError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from utils.asgardeo_manager import AuthCode, asgardeo_manager
+from utils.chat_history import ChatHistory, chat_history_manager
 
 load_dotenv()
 app = FastAPI(title="LLM Chat API")
@@ -26,7 +26,6 @@ app.add_middleware(
 )
 
 security = HTTPBearer()
-chat_histories = {}
 model = AzureChatOpenAI(model_version='gpt-4o-2024-11-20', 
                                     azure_endpoint=os.environ['AZURE_API_BASE'], 
                                     api_key=os.environ['AZURE_API_KEY'],
@@ -43,7 +42,6 @@ def get_user_from_token(credentials: HTTPAuthorizationCredentials = Depends(secu
             status_code=401,
             detail="Invalid authentication token"
         )
-
 class ChatMessage(BaseModel):
     message: str
 
@@ -70,28 +68,12 @@ async def chat(
         thread_id = ThreadID or request.threadId
         if not asgardeo_manager.get_user_id_from_thread_id(thread_id):
             asgardeo_manager.store_user_id_against_thread_id(thread_id, user_id)
-        if thread_id not in chat_histories:
-            chat_histories[thread_id] = ChatHistory()
         
-        chat_history = chat_histories[thread_id]
-        chat_history.add_user_message(user_message)
-        messages = [
-            {"role": "system", 
-             "content": (
-                "You are a helpful writing assistant. "
-                "Your only task is to refine and polish the user's message using correct grammar, "
-                "spelling, and clarity. If the user’s message references earlier context, incorporate "
-                "that from the conversation history to make the message self-contained. "
-                "Do not answer or solve the user's query. "
-                "Do not provide additional commentary or explanation. "
-                "Simply return the polished version of the user's message."
-                )
-            }
-        ] + chat_history.get_messages()
-        response = model.invoke(messages)
-        print(response)
-        crew_response = create_crew(response, thread_id)
+        chat_history_manager.add_user_message(thread_id, user_message)
+        crew_response = create_crew(user_message, thread_id)
         crew_dict = crew_response.to_dict()
+        chat_history_manager.add_assistant_message(thread_id, str(crew_dict))
+
         chat_response = crew_dict.get('response', {})
         frontend_state = crew_dict.get('frontend_state', {})
         tool_response = chat_response.get("tool_response", {})

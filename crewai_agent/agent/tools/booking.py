@@ -1,4 +1,5 @@
 from datetime import date
+import os
 from typing import Type, Optional
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -6,6 +7,7 @@ import requests
 
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
+from utils.constants import FrontendState
 
 class BookingToolInput(BaseModel):
     """Input schema for BookRoomsTool."""
@@ -45,7 +47,7 @@ class BookingTool(BaseTool):
                 "check_out": check_out.isoformat()
             }
 
-            api_response = requests.post('http://localhost:8001/bookings', json=booking_data, headers=headers)
+            api_response = requests.post(f"{os.environ['HOTEL_API_BASE_URL']}/bookings", json=booking_data, headers=headers)
             
             if (api_response.status_code == 200):
                 booking_details = api_response.json()
@@ -56,22 +58,23 @@ class BookingTool(BaseTool):
                 }
                 hotel_name = booking_details["hotel_name"]
                 message = f"Room successfully booked at {hotel_name} for dates {check_in} to {check_out}"
+                frontend_state = FrontendState.BOOKING_CONFIRMED
             else:
                 response_dict = {
                     "error": api_response.json().get("detail", "Booking failed"),
                     "status": "failed"
                 }
                 message = f"Failed to book room: {response_dict['error']}"
-
+                frontend_state = FrontendState.BOOKING_CONFIRMED_ERROR
             response = Response(
                 chat_response=message,
                 tool_response=response_dict
             )
-            return CrewOutput(response=response, frontend_state="booking_confirmed").model_dump_json()
+            return CrewOutput(response=response, frontend_state=frontend_state).model_dump_json()
 
         except Exception as e:
             error_response = Response(
                 chat_response=f"An error occurred while booking the room: {str(e)}",
                 tool_response={"error": str(e), "status": "error"}
             )
-            return CrewOutput(response=error_response, frontend_state="error").model_dump_json()
+            return CrewOutput(response=error_response, frontend_state=FrontendState.BOOKING_CONFIRMED_ERROR).model_dump_json()

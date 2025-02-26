@@ -18,8 +18,66 @@ app.add_middleware(
 
 # In-memory data stores
 hotels_data = {
-    1: {"name": "Asgardeo Saman Villa", "description": "Enjoy a luxurious stay at Asgardeo Saman Villas in your suite, and indulge in a delicious breakfast and your choice of lunch or dinner from our daily set menus served at the restaurant. Access exquisite facilities, including the infinity pool, Sahana Spa, gymnasium and library, as you unwind in paradise.", "rating" : 4.5},
-    2: {"name": "Asgardeo Colombo Seven", "description": "Asgardeo Colombo Seven is located in the heart of Colombo, the commercial capital of Sri Lanka and offers the discerning traveler contemporary accommodation and modern design aesthetic. Rising over the city landscape, the property boasts stunning views, a rooftop bar and pool, main restaurant, gym and spa services, as well as conference facilities.", "rating" : 4.9}
+    1: {
+        "name": "Asgardeo Saman Villa",
+        "description": "Enjoy a luxurious stay at Asgardeo Saman Villas in your suite, and indulge in a delicious breakfast and your choice of lunch or dinner from our daily set menus served at the restaurant. Access exquisite facilities, including the infinity pool, Sahana Spa, gymnasium and library, as you unwind in paradise.",
+        "location": "Bentota, Sri Lanka",
+        "rating": 4.5,
+        "amenities": ["Infinity Pool", "Sahana Spa", "Gymnasium", "Library", "Restaurant", "Room Service"],
+        "policies": [
+            "Check-in: 2:00 PM",
+            "Check-out: 12:00 PM", 
+            "No pets allowed",
+            "Non-smoking rooms"
+        ],
+        "roomTypes": ["deluxe", "super_deluxe"],
+        "promotions": ["Early Bird 20% off", "Stay 3 nights get 1 free"]
+    },
+    2: {
+        "name": "Asgardeo Colombo Seven",
+        "description": "Asgardeo Colombo Seven is located in the heart of Colombo, the commercial capital of Sri Lanka and offers the discerning traveler contemporary accommodation and modern design aesthetic. Rising over the city landscape, the property boasts stunning views, a rooftop bar and pool, main restaurant, gym and spa services, as well as conference facilities.",
+        "location": "Colombo 07, Sri Lanka", 
+        "rating": 4.9,
+        "amenities": ["Rooftop Pool", "Spa", "Gym", "Conference Facilities", "Restaurant", "Rooftop Bar"],
+        "policies": [
+            "Check-in: 3:00 PM",
+            "Check-out: 11:00 AM",
+            "No pets allowed", 
+            "Non-smoking rooms"
+        ],
+        "roomTypes": ["studio", "super_deluxe"],
+        "promotions": ["Business Package", "Weekend Special"]
+    },
+    3: {
+        "name": "Asgardeo Kandy Hills",
+        "description": "Set amidst the misty hills of Kandy, Asgardeo Kandy Hills offers breathtaking views of the surrounding mountains. This heritage property combines traditional Sri Lankan architecture with modern luxury, featuring an infinity pool overlooking the valley, authentic local cuisine, and a wellness center.",
+        "location": "Kandy, Sri Lanka",
+        "rating": 4.7,
+        "amenities": ["Infinity Pool", "Wellness Center", "Heritage Restaurant", "Tea Lounge", "Mountain Biking", "Cultural Tours"],
+        "policies": [
+            "Check-in: 2:00 PM",
+            "Check-out: 11:00 AM",
+            "No pets allowed",
+            "Non-smoking rooms"
+        ],
+        "roomTypes": ["deluxe", "studio"],
+        "promotions": ["Cultural Experience Package", "Honeymoon Special"]
+    },
+    4: {
+        "name": "Asgardeo Beach Resort Galle",
+        "description": "Located along the historic Galle coast, Asgardeo Beach Resort offers direct beach access and stunning views of the Indian Ocean. The resort features colonial-era architecture, beachfront dining, water sports facilities, and a luxury spa.",
+        "location": "Galle, Sri Lanka",
+        "rating": 4.8,
+        "amenities": ["Private Beach", "Water Sports", "Beachfront Dining", "Luxury Spa", "Infinity Pool", "Kids Club"],
+        "policies": [
+            "Check-in: 2:00 PM", 
+            "Check-out: 12:00 PM",
+            "No pets allowed",
+            "Non-smoking rooms"
+        ],
+        "roomTypes": ["deluxe", "super_deluxe"],
+        "promotions": ["Beach Getaway Package", "Family Fun Deal"]
+    }
 }
 
 room_type_data = {
@@ -29,27 +87,178 @@ room_type_data = {
 }
 
 rooms_data = {
-    1: { 
-        101: {"room_number": "101", "room_type": "deluxe", "price_per_night": 99.99},
-        102: {"room_number": "102", "room_type": "super_deluxe", "price_per_night": 149.50}
+    1: {
+        101: {
+            "room_number": "101",
+            "room_type": "deluxe",
+            "price_per_night": 99.99,
+            "occupancy": 2,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        },
+        102: {
+            "room_number": "102", 
+            "room_type": "super_deluxe",
+            "price_per_night": 149.50,
+            "occupancy": 3,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Bathtub", "Sea View"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        },
+        103: {
+            "room_number": "103",
+            "room_type": "deluxe",
+            "price_per_night": 99.99,
+            "occupancy": 2,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Garden View"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        }
     },
     2: {
-        201: {"room_number": "201", "room_type": "studio", "price_per_night": 299.99},
-        202: {"room_number": "202", "room_type": "super_deluxe", "price_per_night": 199.50}
+        201: {
+            "room_number": "201",
+            "room_type": "studio",
+            "price_per_night": 299.99,
+            "occupancy": 4,
+            "amenities": ["Air Conditioning", "Kitchen", "Free WiFi", "Safe", "Washing Machine", "City View"],
+            "cancellationPolicy": "Free cancellation up to 48 hours before check-in",
+            "is_available": True
+        },
+        202: {
+            "room_number": "202",
+            "room_type": "super_deluxe",
+            "price_per_night": 199.50,
+            "occupancy": 3,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Bathtub", "City View"],
+            "cancellationPolicy": "Free cancellation up to 48 hours before check-in",
+            "is_available": True
+        },
+        203: {
+            "room_number": "203",
+            "room_type": "studio",
+            "price_per_night": 289.99,
+            "occupancy": 4,
+            "amenities": ["Air Conditioning", "Kitchen", "Free WiFi", "Safe", "Washing Machine"],
+            "cancellationPolicy": "Free cancellation up to 48 hours before check-in", 
+            "is_available": True
+        }
+    },
+    3: {
+        301: {
+            "room_number": "301",
+            "room_type": "deluxe",
+            "price_per_night": 179.99,
+            "occupancy": 2,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Mountain View"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        },
+        302: {
+            "room_number": "302",
+            "room_type": "studio",
+            "price_per_night": 259.99,
+            "occupancy": 4,
+            "amenities": ["Air Conditioning", "Kitchen", "Free WiFi", "Safe", "Washing Machine", "Valley View"],
+            "cancellationPolicy": "Free cancellation up to 48 hours before check-in",
+            "is_available": True
+        },
+        303: {
+            "room_number": "303",
+            "room_type": "deluxe",
+            "price_per_night": 189.99,
+            "occupancy": 2,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Garden View"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        }
+    },
+    4: {
+        401: {
+            "room_number": "401",
+            "room_type": "deluxe",
+            "price_per_night": 199.99,
+            "occupancy": 2,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Ocean View"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        },
+        402: {
+            "room_number": "402",
+            "room_type": "super_deluxe",
+            "price_per_night": 299.50,
+            "occupancy": 3,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Bathtub", "Ocean View", "Private Balcony"],
+            "cancellationPolicy": "Free cancellation up to 48 hours before check-in",
+            "is_available": True
+        },
+        403: {
+            "room_number": "403",
+            "room_type": "deluxe",
+            "price_per_night": 209.99,
+            "occupancy": 2,
+            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe", "Garden View"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
+            "is_available": True
+        }
     }
 }
 
-bookings_data = {}
+bookings_data = {
+
+}
+
+user_bookings_data = [
+    {
+        "hotel_id": 1,
+        "hotel_name": "Asgardeo Saman Villa",
+        "user_id": "6dcec033-8117-49bb-8363-3c519bcdbb73",
+        "room_id": 101,
+        "room_type": "deluxe",
+        "check_in": date(2024, 2, 12),
+        "check_out": date(2024, 2, 15),
+        "total_price": 299.97
+    },
+    {
+        "hotel_id": 2,
+        "hotel_name": "Asgardeo Colombo Seven",
+        "user_id": "6dcec033-8117-49bb-8363-3c519bcdbb73",
+        "room_id": 201,
+        "room_type": "studio",
+        "check_in": date(2024, 3, 1),
+        "check_out": date(2024, 3, 5),
+        "total_price": 1199.96
+    }
+]
 last_booking_id = 0
 
-@app.get("/hotels", response_model=List[Hotel])
+@app.get("/hotels", response_model=Hotels)
 async def list_hotels(
     token_data: TokenData = Security(validate_token, scopes=["read_hotels"])
 ):
-    return [
-        Hotel(id=hid, **hotel_data)
-        for hid, hotel_data in hotels_data.items()
-    ]
+    return {
+        "hotels": [
+            Hotel(id=hid, **hotel_data)
+            for hid, hotel_data in hotels_data.items()
+        ]
+    }
+
+@app.get("/hotels/{hotel_id}/rooms", response_model=Rooms)
+async def list_hotel_rooms(
+    hotel_id: int,
+    token_data: TokenData = Security(validate_token, scopes=["read_rooms"])
+):
+    if hotel_id not in rooms_data:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+        
+    return {
+        "rooms": [
+            Room(id=rid, **room_data)
+            for rid, room_data in rooms_data[hotel_id].items()
+        ]
+    }
+
 
 @app.get("/rooms/search", response_model=List[RoomSearchResult])
 async def search_rooms(
@@ -148,11 +357,13 @@ async def get_user_bookings(
     user_id: str,
     token_data: TokenData = Security(validate_token, scopes=["read_bookings"])
 ):
-    return [
-        Booking(id=bid, **booking)
-        for bid, booking in bookings_data.items()
-        if booking["user_id"] == user_id
-    ]
+    return {
+        "bookings": [
+            Booking(id=bid, **booking)
+            for bid, booking in user_bookings_data.items()
+            if booking["user_id"] == user_id
+        ]
+    }
 
 @app.get("/users/{user_id}/loyalty", response_model=UserLoyalty)
 async def get_user_loyalty(
@@ -183,7 +394,7 @@ async def get_room_details(
     
     # Check room availability
     is_available = True
-    for booking in bookings_data.values():
+    for booking in bookings_data:
         if (booking["hotel_id"] == hotel_id and 
             booking["room_id"] == room_id and 
             not (check_out <= booking["check_in"] or check_in >= booking["check_out"])):
