@@ -95,8 +95,10 @@ class AsgardeoManager:
                     f"scope={scopes_str}&" 
                     f"response_type=code&"
                     f"response_mode=query&"
+                    f"selector=calendar&"
+                    f"reAuth=true&"
                     f"share_federated_token=true&"
-                    f"federated_token_scope=Google Calendar;https://www.googleapis.com/auth/calendar.events.owned openid"
+                    f"federated_token_scope=Google Calendar;https://www.googleapis.com/auth/calendar.events.owned openid&"
                     f"state={state}&"
                     f"nonce={nonce}"
                 )
@@ -129,13 +131,15 @@ class AsgardeoManager:
                 verify=False
             )
             data = response.json()
+            print(data)
             access_token = data.get("access_token")
-            fed_token = data.get("federated_tokens")[0]
             token_key = self.get_token_key(code_entry.user_id, code_entry.scopes)
             token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=access_token)
             self.auth_tokens[token_key] = token
-            if fed_token:
-                fed_access_token = fed_token.get("accessToken")
+            fed_tokens = data.get("federated_tokens")
+            print(fed_tokens)
+            if fed_tokens:
+                fed_access_token = fed_tokens[0].get("accessToken")
                 token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=fed_access_token)
                 self.auth_tokens[token_key+"_google"] = token
             return access_token

@@ -4,7 +4,8 @@ from typing import Type, Optional
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 import requests
-from utils.constants import FrontendState
+from utils.state_manager import state_manager
+from utils.constants import FlowState, FrontendState
 
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
@@ -84,6 +85,7 @@ class BookingConfirmationTool(BaseTool):
                 }
                 message = "Please confirm the booking"
                 frontend_state = FrontendState.GET_BOOKING_CONFIRMATION
+                state_manager.add_state(self.thread_id, FlowState.BOOKING_CONFIRMATION_INITIATED)
             else:
                 response_dict = {
                     "error": api_response.json().get("detail", "Failed to get booking details"),

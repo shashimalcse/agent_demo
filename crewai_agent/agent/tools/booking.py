@@ -6,8 +6,9 @@ from pydantic import BaseModel, Field
 import requests
 
 from schemas import CrewOutput, Response
+from utils.state_manager import state_manager
 from utils.asgardeo_manager import asgardeo_manager
-from utils.constants import FrontendState
+from utils.constants import FlowState, FrontendState
 
 class BookingToolInput(BaseModel):
     """Input schema for BookRoomsTool."""
@@ -29,6 +30,8 @@ class BookingTool(BaseTool):
 
     def _run(self, room_id: int, hotel_id:int, check_in: date, check_out: date) -> str:
         try:
+            state_manager.add_state(self.thread_id, FlowState.BOOKING_CONFIRMATION_COMPLETED)
+            state_manager.add_state(self.thread_id, FlowState.BOOKING_INITIATED)
             # Get access token
             user_id = asgardeo_manager.get_user_id_from_thread_id(self.thread_id)
             access_token = asgardeo_manager.get_user_token(user_id, ["openid", "create_bookings"])
@@ -57,18 +60,24 @@ class BookingTool(BaseTool):
                     "status": "confirmed"
                 }
                 hotel_name = booking_details["hotel_name"]
-                message = f"Room successfully booked at {hotel_name} for dates {check_in} to {check_out}"
-                frontend_state = FrontendState.BOOKING_CONFIRMED
+                message = f"Room successfully booked at {hotel_name} for dates {check_in} to {check_out}. Booking ID: {response_dict['booking_id']}"
+                frontend_state = FrontendState.BOOKING_COMPLETED
+                authorization_url = asgardeo_manager.get_google_authorization_url(user_id, ["openid", "create_bookings"])
+                state_manager.add_state(self.thread_id, FlowState.BOOKING_COMPLETED)
             else:
                 response_dict = {
                     "error": api_response.json().get("detail", "Booking failed"),
                     "status": "failed"
                 }
                 message = f"Failed to book room: {response_dict['error']}"
-                frontend_state = FrontendState.BOOKING_CONFIRMED_ERROR
+                frontend_state = FrontendState.BOOKING_COMPLETED_ERROR  
+                authorization_url = None 
             response = Response(
                 chat_response=message,
-                tool_response=response_dict
+                tool_response={
+                    "booking_details": response_dict,
+                    "authorization_url": authorization_url
+                }
             )
             return CrewOutput(response=response, frontend_state=frontend_state).model_dump_json()
 
@@ -77,4 +86,4 @@ class BookingTool(BaseTool):
                 chat_response=f"An error occurred while booking the room: {str(e)}",
                 tool_response={"error": str(e), "status": "error"}
             )
-            return CrewOutput(response=error_response, frontend_state=FrontendState.BOOKING_CONFIRMED_ERROR).model_dump_json()
+            return CrewOutput(response=error_response, frontend_state=FrontendState.BOOKING_COMPLETED_ERROR).model_dump_json()

@@ -16,12 +16,11 @@ type BookingDetails = {
 }
 
 interface BookingConfirmationCardProps {
-  bookingDetails: BookingDetails;
   authorizationUrl: string
   onContinueBooking: () => void;
 }
 
-export function BookingConfirmationCard({ bookingDetails, authorizationUrl, onContinueBooking }: BookingConfirmationCardProps) {
+export function BookingConfirmationCard({ authorizationUrl, onContinueBooking }: BookingConfirmationCardProps) {
   const [hasClicked, setHasClicked] = useState(false)
   const handleAuthorize = () => {
     window.open(authorizationUrl, '_blank', 'noopener,noreferrer')
@@ -32,55 +31,8 @@ export function BookingConfirmationCard({ bookingDetails, authorizationUrl, onCo
       <CardHeader>
         <CardTitle className="text-xl font-serif">Booking Details</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="space-y-4">
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Hotel Information</h3>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Hotel Name</span>
-              <span className="font-medium">{bookingDetails.hotel_name}</span>
-            </div>
-          </div>
-
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Room Details</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Room Number</span>
-                <span className="font-medium">{bookingDetails.room_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Room Type</span>
-                <span className="font-medium capitalize">{bookingDetails.room_type}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Stay Information</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Check-in</span>
-                <span className="font-medium">{new Date(bookingDetails.check_in).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Check-out</span>
-                <span className="font-medium">{new Date(bookingDetails.check_out).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Price per night</span>
-                <span className="font-medium">${bookingDetails.price_per_night}</span>
-              </div>
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Total Price</span>
-                <span className="text-orange-600">${bookingDetails.total_price}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        {
+      <CardContent>
+      {
           hasClicked ? (
             <Button
               onClick={onContinueBooking}
@@ -97,7 +49,7 @@ export function BookingConfirmationCard({ bookingDetails, authorizationUrl, onCo
             Confirm Booking
           </Button>)
         }
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }

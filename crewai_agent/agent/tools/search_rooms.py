@@ -4,7 +4,8 @@ from typing import Type, Optional, Optional
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 import requests
-from utils.constants import FrontendState
+from utils.state_manager import state_manager
+from utils.constants import FlowState, FrontendState
 
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
@@ -45,7 +46,7 @@ class SearchRoomsTool(BaseTool):
         
         api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/rooms/search/", params=params, headers=headers)
         rooms_data = api_response.json()
-        
+        state_manager.add_state(self.thread_id, FlowState.SEARCHED_ROOMS)
         # Convert list response to dictionary format
         response_dict = {"rooms": rooms_data, "check_in": check_in, "check_out": check_out} if isinstance(rooms_data, list) else rooms_data
         response = Response(

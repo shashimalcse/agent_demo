@@ -4,10 +4,11 @@ from typing import Type, Optional, Optional
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 import requests
-from utils.constants import FrontendState
+from utils.constants import FlowState, FrontendState
 
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
+from utils.state_manager import state_manager
 
 class FetchHotelsToolInput(BaseModel):
     """Input schema for FetchHotelsTool."""
@@ -35,6 +36,8 @@ class FetchHotelsTool(BaseTool):
         
         api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/hotels", headers=headers)
         hotels_data = api_response.json()
+
+        state_manager.add_state(self.thread_id, FlowState.FETCHED_HOTELS)
         
         response = Response(
             chat_response=None, 

@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input"
 import { PreferencesWidget, type Preferences } from "./chat/preferences-widget"
 import { Room, RoomList } from "./chat/room-list"
 import { useSession } from "next-auth/react"
-import { AuthorizeButton } from "./chat/authorize-button"
 import { LoadingIndicator } from "./chat/loading-indicator"
 import { BookingConfirmationCard } from "./chat/booking-confirmation-card"
 import { MarkdownRenderer } from "./chat/markdown-renderer"
+import { AddToCalendar } from "./chat/add-to-calendar"
 
 type SelectedRoom = {
   hotel_id: string
@@ -36,6 +36,10 @@ type RoomDetails = {
   check_out?: string
 }
 
+type BookingDetails = {
+  booking_id: string
+}
+
 type Response = {
   chat_response: string
   tool_response: {
@@ -45,6 +49,7 @@ type Response = {
     selected_room?: SelectedRoom
     authorization_url?: string
     room_details?: RoomDetails
+    booking_details?: BookingDetails
   }
 }
 
@@ -71,6 +76,7 @@ export function ChatComponent() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [showCalendarWidget, setShowCalendarWidget] = useState<boolean>(true)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -142,113 +148,6 @@ export function ChatComponent() {
     }
   }
 
-  const handlePreferencesSubmit = async (preferences: Preferences) => {
-    const message = `Searching for rooms in ${preferences.location} from ${preferences.checkIn.toLocaleDateString()} to ${preferences.checkOut.toLocaleDateString()}`
-
-    const loadingMessage: Message = {
-      id: 'loading',
-      content: '',
-      isUser: false,
-      isLoading: true,
-      loadingAction: 'searching'
-    }
-
-    setMessages((prev) => [...prev, loadingMessage])
-    setIsLoading(true)
-
-    try {
-      const response = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30`
-        },
-        body: JSON.stringify({
-          message: message,
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok')
-      }
-
-      const agentMessage = await response.json() as AgentMessage
-
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: agentMessage.response.chat_response,
-        isUser: false,
-        toolResponse: agentMessage
-      }
-
-      setMessages((prev) => prev.filter(msg => msg.id !== 'loading').concat(botMessage))
-    } catch (error) {
-      console.error("Error sending preferences:", error)
-      setMessages(prev => prev.filter(msg => msg.id !== 'loading').concat({
-        id: Date.now().toString(),
-        content: "Sorry, I couldn't process your preferences. Please try again.",
-        isUser: false
-      }))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleBookConfirmation = async (room: Room, checkIn: string, checkOut:string) => {
-    const bookingMessage = `I would like this room id : ${room.room_number} at hotel id : ${room.hotel_id} from ${checkIn} to ${checkOut}. Please give me booking details before proceeding.`;
-  
-    
-    const loadingMessage: Message = {
-      id: 'loading',
-      content: '',
-      isUser: false,
-      isLoading: true,
-      loadingAction: 'booking'
-    }
-  
-    setMessages((prev) => [...prev, loadingMessage])
-    setIsLoading(true)
-  
-    try {
-      const response = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.accessToken}`,
-          "ThreadId": threadId
-        },
-        body: JSON.stringify({
-          message: bookingMessage,
-          threadId: threadId
-        })
-      })
-  
-      if (!response.ok) {
-        throw new Error('Network response was not ok')
-      }
-  
-      const agentMessage = await response.json() as AgentMessage
-  
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: agentMessage.response.chat_response,
-        isUser: false,
-        toolResponse: agentMessage
-      }
-  
-      setMessages((prev) => prev.filter(msg => msg.id !== 'loading').concat(botMessage))
-    } catch (error) {
-      console.error("Error booking room:", error)
-      setMessages(prev => prev.filter(msg => msg.id !== 'loading').concat({
-        id: Date.now().toString(),
-        content: "Sorry, I couldn't process your booking request. Please try again.",
-        isUser: false
-      }))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleBookConfirmationRetry = async (room: RoomDetails) => {
     const bookingMessage = `Ok i am ok with booking details you provide. Lets book the room id : ${room.room_id} at hotel id : ${room.hotel_id} from ${room.check_in} to ${room.check_out}.`;
     
@@ -303,24 +202,58 @@ export function ChatComponent() {
     }
   }
 
+  const handleAddToCalendar = async (bookingDetails:BookingDetails) => {
+    // This function will be called when the user confirms adding to calendar
+    try {
+      const bookingMessage = `Lets add the booking with booking id : ${bookingDetails.booking_id} to the calendar.`;
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.accessToken}`,
+          "ThreadId": threadId
+        },
+        body: JSON.stringify({
+          message: bookingMessage,
+          threadId: threadId
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add to calendar')
+      }
+
+      // Hide the calendar widget after successful addition
+      setShowCalendarWidget(false)
+      
+      // Optionally add a success message to the chat
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: "Event has been added to your calendar successfully!",
+        isUser: false
+      }])
+      
+    } catch (error) {
+      console.error("Error adding to calendar:", error)
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: "Sorry, I couldn't add the event to your calendar. Please try again.",
+        isUser: false
+      }])
+    }
+  }
+
+  const handleSkipCalendar = () => {
+    // Simply hide the calendar widget when skipped
+    setShowCalendarWidget(false)
+  }
+
   const renderToolResponse = (msg: AgentMessage) => {
-    if (msg.frontend_state === "get_preferences") {
-      return <PreferencesWidget onSubmit={handlePreferencesSubmit} />
-    } else if (msg.frontend_state === "show_rooms" && msg.response.tool_response?.rooms) {
-      return (
-        <RoomList 
-          rooms={msg.response.tool_response.rooms} 
-          checkIn={msg.response.tool_response.check_in}
-          checkOut={msg.response.tool_response.check_out}
-          onBookConfirmation={handleBookConfirmation}
-        />
-      )
-    } else if (msg.frontend_state === "booking_confirmation") {
+    if (msg.frontend_state === "get_booking_confirmation") {
       const { tool_response } = msg.response;
-      if (tool_response.room_details && 'room_id' in tool_response.room_details) {
+      if (tool_response.authorization_url) {
         return (
           <BookingConfirmationCard 
-            bookingDetails={tool_response.room_details} 
             authorizationUrl={tool_response.authorization_url} 
             onContinueBooking={() => {
               if (tool_response.room_details) {
@@ -333,24 +266,26 @@ export function ChatComponent() {
         )
       }
     } 
-    
-    // else if (msg.frontend_state === "unauthorize" && msg.response.tool_response?.authorization_url) {
-    //   const { selected_room, authorization_url, check_in, check_out } = msg.response.tool_response
-    //   return (
-    //     <AuthorizeButton 
-    //       authorizationUrl={authorization_url} 
-    //       onContinueBooking={() => {
-    //         if (selected_room) {
-    //           handleBookConfirmationRetry(
-    //             selected_room,
-    //             check_in,
-    //             check_out
-    //           )
-    //         }
-    //       }}
-    //     />
-    //   )
-    // }
+    if (msg.frontend_state === "booking_completed") {
+      const { tool_response } = msg.response;
+      if (tool_response.authorization_url) {
+        return (
+          <div className="mt-2">
+            {showCalendarWidget && (
+              <AddToCalendar 
+                authorizationUrl={tool_response.authorization_url || ""}
+                onAddToCalendar={() => {
+                  if (tool_response.booking_details) {
+                     handleAddToCalendar(tool_response.booking_details || {})
+                  }
+                }}
+                onSkipCalendar={handleSkipCalendar}
+              />
+            )}
+          </div>
+        )
+      }
+    }
     return null
   }
 

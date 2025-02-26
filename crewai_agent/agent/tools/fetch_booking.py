@@ -10,24 +10,24 @@ from utils.constants import FlowState, FrontendState
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
 
-class FetchRoomsToolInput(BaseModel):
-    """Input schema for SearchRoomTool."""
-    hotel_id: int = Field(..., description="Id of the hotel")
+class FetchBookingsToolInput(BaseModel):
+    """Input schema for FetchBookingsTool."""
+    booking_id: int = Field(..., description="Id of the booking")
 
-class FetchRoomsTool(BaseTool):
-    name: str = "FetchRoomsTool"
-    description: str = "Fetches all rooms of a hotel."
-    args_schema: Type[BaseModel] = FetchRoomsToolInput
+class FetchBookingsTool(BaseTool):
+    name: str = "FetchBookingsTool"
+    description: str = "Fetch a booking by id."
+    args_schema: Type[BaseModel] = FetchBookingsToolInput
     thread_id: Optional[str] = None
 
     def __init__(self, thread_id: str = None):
         super().__init__()
         self.thread_id = thread_id
 
-    def _run(self, hotel_id: int) -> str:
+    def _run(self, booking_id: int) -> str:
 
         try: 
-            token = asgardeo_manager.get_app_token(["read_rooms"])
+            token = asgardeo_manager.get_app_token(["read_bookings"])
         except Exception as e:
             raise
 
@@ -35,10 +35,10 @@ class FetchRoomsTool(BaseTool):
             'Authorization': f'Bearer {token}'
         }
         
-        api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/hotels/{hotel_id}/rooms", headers=headers)
+        api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/bookings/{booking_id}", headers=headers)
         rooms_data = api_response.json()
 
-        state_manager.add_state(self.thread_id, FlowState.FETCHED_ROOMS)
+        state_manager.add_state(self.thread_id, FlowState.FETCHED_BOOKINGS)
         
         response = Response(
             chat_response=None, 

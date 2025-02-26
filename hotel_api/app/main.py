@@ -4,7 +4,6 @@ from typing import List, Optional
 from datetime import date
 from .schemas import *
 from .dependencies import TokenData, validate_token
-from .constants import SCOPES
 
 app = FastAPI()
 
@@ -205,9 +204,7 @@ rooms_data = {
     }
 }
 
-bookings_data = {
-
-}
+bookings_data = {}
 
 user_bookings_data = [
     {
@@ -340,6 +337,7 @@ async def book_room(
     # Create booking
     last_booking_id += 1
     bookings_data[last_booking_id] = {
+        "id": last_booking_id,  # Add booking ID here
         "hotel_id": booking.hotel_id,
         "hotel_name": hotel["name"],
         "user_id": booking.user_id,
@@ -350,20 +348,27 @@ async def book_room(
         "total_price": total_price
     }
     
-    return Booking(id=last_booking_id, **bookings_data[last_booking_id])
+    return Booking(**bookings_data[last_booking_id])
+
+@app.get("/bookings/{booking_id}", response_model=Booking)
+async def get_booking_details(
+    booking_id: int,
+    token_data: TokenData = Security(validate_token, scopes=["read_bookings"])
+):
+    if booking_id not in bookings_data:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return Booking(**bookings_data[booking_id])
 
 @app.get("/users/{user_id}/bookings", response_model=List[Booking])
 async def get_user_bookings(
     user_id: str,
     token_data: TokenData = Security(validate_token, scopes=["read_bookings"])
 ):
-    return {
-        "bookings": [
-            Booking(id=bid, **booking)
-            for bid, booking in user_bookings_data.items()
-            if booking["user_id"] == user_id
-        ]
-    }
+    return [
+        Booking(**booking)
+        for booking in user_bookings_data
+        if booking["user_id"] == user_id
+    ]
 
 @app.get("/users/{user_id}/loyalty", response_model=UserLoyalty)
 async def get_user_loyalty(
@@ -394,7 +399,7 @@ async def get_room_details(
     
     # Check room availability
     is_available = True
-    for booking in bookings_data:
+    for booking in bookings_data.values():  # Fix: iterate over values
         if (booking["hotel_id"] == hotel_id and 
             booking["room_id"] == room_id and 
             not (check_out <= booking["check_in"] or check_in >= booking["check_out"])):

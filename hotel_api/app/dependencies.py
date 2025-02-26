@@ -4,7 +4,6 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 
 from pydantic import BaseModel
-from .constants import SCOPES
 
 security = HTTPBearer()
 
