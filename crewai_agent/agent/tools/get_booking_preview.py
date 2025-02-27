@@ -75,6 +75,8 @@ class BookingPreviewTool(BaseTool):
             
             if (api_response.status_code == 200):
                 booking_preview = api_response.json()
+                if booking_preview.get("is_available") == False:
+                    raise Exception("Room not available for the selected dates. Please ask user to select different dates or room.")
                 message = json.dumps(booking_preview)+ " Please confirm the booking"
                 frontend_state = FrontendState.BOOKING_PREVIEW
                 state_manager.add_state(self.thread_id, FlowState.BOOKING_PREVIEW_INITIATED)
