@@ -2,19 +2,6 @@ from pydantic import BaseModel
 from datetime import date
 from typing import Dict, List, Optional
 
-class Hotel(BaseModel):
-    id: int
-    name: str
-    description: str
-    location: str
-    rating: float
-    amenities: List[str]
-    policies: List[str]
-    roomTypes: List[str]
-    promotions: List[str]
-
-class Hotels(BaseModel):
-    hotels: List[Hotel]    
 class Room(BaseModel):
     id: int
     room_number: str
@@ -25,8 +12,39 @@ class Room(BaseModel):
     cancellationPolicy: str
     is_available: bool
 
+class RoomBasic(BaseModel):
+    id: int
+    room_number: str
+    room_type: str
+    price_per_night: float
+    occupancy: int
+    is_available: bool    
+
+class Hotel(BaseModel):
+    id: int
+    name: str
+    description: str
+    location: str
+    rating: float
+    amenities: List[str]
+    policies: List[str]
+    roomTypes: List[str]
+    promotions: List[str]
+    rooms: List[RoomBasic]
+
+class HotelBasic(BaseModel):
+    id: int
+    name: str
+    description: str
+    location: str
+    rating: float
+    roomTypes: List[str]
+
+class Hotels(BaseModel):
+    hotels: List[HotelBasic]    
+
 class Rooms(BaseModel):
-    rooms: List[Room]    
+    rooms: List[RoomBasic]    
 class BookingCreate(BaseModel):
     user_id: str
     hotel_id: int
@@ -49,17 +67,6 @@ class UserLoyalty(BaseModel):
     user_id: str
     loyalty_points: int
 
-class ChatRequest(BaseModel):
-    message: str
-
-class ChatResponseContent(BaseModel):
-    chat_response: str
-    tool_response: str
-
-class ChatResponse(BaseModel):
-    response: ChatResponseContent
-    frontend_state: str = ""
-
 class RoomSearchResult(BaseModel):
     room_id: int
     hotel_id: int
@@ -71,7 +78,12 @@ class RoomSearchResult(BaseModel):
     room_type_description: str
     price_per_night: float
 
-class RoomDetails(BaseModel):
+class BookingPreviewRequest(BaseModel):
+    room_id: int
+    check_in: date
+    check_out: date    
+
+class BookingPreview(BaseModel):
     room_id: int
     room_number: str
     room_type: str

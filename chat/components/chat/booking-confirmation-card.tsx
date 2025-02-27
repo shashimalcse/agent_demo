@@ -1,55 +1,66 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, CircleCheckBig } from "lucide-react";
+import { CircleCheckBig } from "lucide-react";
 import { useState } from "react";
-
-type BookingDetails = {
-  room_id: number;
-  room_number: string;
-  room_type: string;
-  price_per_night: number;
-  total_price: number;
-  hotel_id: number;
-  hotel_name: string;
-  check_in: string;
-  check_out: string;
-}
 
 interface BookingConfirmationCardProps {
   authorizationUrl: string
   onContinueBooking: () => void;
+  threadId: string;
 }
 
-export function BookingConfirmationCard({ authorizationUrl, onContinueBooking }: BookingConfirmationCardProps) {
+export function BookingConfirmationCard({ authorizationUrl, onContinueBooking, threadId }: BookingConfirmationCardProps) {
   const [hasClicked, setHasClicked] = useState(false)
   const handleAuthorize = () => {
     window.open(authorizationUrl, '_blank', 'noopener,noreferrer')
     setHasClicked(true)
+
+    let attempts = 0;
+    const maxAttempts = 12; // 12 attempts for 1 minute (5 seconds interval)
+    const intervalId = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(intervalId);
+        console.error('Authorization check timed out');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:8000/state/${threadId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const states = data.states;
+
+          if (states.includes('BOOKING_AUTORIZED')) {
+            clearInterval(intervalId);
+            onContinueBooking();
+          }
+        } else {
+          console.error('Failed to complete authorization');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }, 5000); // Call every 5 seconds
   }
   return (
-    <Card className="w-full mt-4">
-      <CardHeader>
-        <CardTitle className="text-xl font-serif">Booking Details</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full mt-4">
       {
-          hasClicked ? (
-            <Button
-              onClick={onContinueBooking}
-              className="w-full mt-4 bg-orange-500 hover:bg-orange-600"
-            >
-              <ArrowRight className="mr-2 h-4 w-4" />
-              Continue Booking
-            </Button>
-          ) : (<Button
+        !hasClicked ? (
+          <Button
             onClick={handleAuthorize}
             className="w-full mt-4 bg-orange-500 hover:bg-orange-600"
           >
-            <CircleCheckBig className="mr-2 h-4 w-4" />
             Confirm Booking
-          </Button>)
-        }
-      </CardContent>
-    </Card>
+          </Button>
+        ) : (
+          <div></div>
+        )
+      }
+    </div>
   );
 }

@@ -30,7 +30,11 @@ class BookingTool(BaseTool):
 
     def _run(self, room_id: int, hotel_id:int, check_in: date, check_out: date) -> str:
         try:
-            state_manager.add_state(self.thread_id, FlowState.BOOKING_CONFIRMATION_COMPLETED)
+
+            if FlowState.BOOKING_PREVIEW_INITIATED not in state_manager.get_states(self.thread_id):
+                raise Exception("Booking preview not completed")
+
+            state_manager.add_state(self.thread_id, FlowState.BOOKING_PREVIEW_COMPLETED)
             state_manager.add_state(self.thread_id, FlowState.BOOKING_INITIATED)
             # Get access token
             user_id = asgardeo_manager.get_user_id_from_thread_id(self.thread_id)
@@ -62,7 +66,7 @@ class BookingTool(BaseTool):
                 hotel_name = booking_details["hotel_name"]
                 message = f"Room successfully booked at {hotel_name} for dates {check_in} to {check_out}. Booking ID: {response_dict['booking_id']}"
                 frontend_state = FrontendState.BOOKING_COMPLETED
-                authorization_url = asgardeo_manager.get_google_authorization_url(user_id, ["openid", "create_bookings"])
+                authorization_url = asgardeo_manager.get_google_authorization_url(self.thread_id, user_id, ["openid", "create_bookings"])
                 state_manager.add_state(self.thread_id, FlowState.BOOKING_COMPLETED)
             else:
                 response_dict = {

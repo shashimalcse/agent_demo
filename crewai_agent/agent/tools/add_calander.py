@@ -58,14 +58,30 @@ class AddCalanderTool(BaseTool):
 
             # Check the response
             if response.status_code == 200:
-                event_id = response.json().get("id")
-                return f"Event created successfully with ID: {event_id}"
+                print(event)
+                message = f"Event created successfully in your calendar"
+                frontend_state = FrontendState.ADDED_TO_CALENDAR
             else:
-                return f"Failed to create event: {response.status_code} {response.text}"
+                message = "An error occurred while adding the event to the calendar. Please try the Add to Calendar tool again."
+                frontend_state = FrontendState.CALENDAR_ERROR
+                
+            response = Response(
+                chat_response=message,
+                tool_response={}
+            )
+            return CrewOutput(response=response, frontend_state=frontend_state).model_dump_json()
 
         except requests.exceptions.RequestException as e:
-            return f"Error making request: {str(e)}"
+            error_response = Response(
+                chat_response=f"An error occurred while adding the event to the calendar, please try again.",
+                tool_response={}
+            )
+            return CrewOutput(response=error_response, frontend_state=FrontendState.CALENDAR_ERROR).model_dump_json()
         except Exception as e:
-            return f"Unexpected error: {str(e)}"
+            error_response = Response(
+                chat_response=f"An error occurred while adding the event to the calendar, please try again.",
+                tool_response={}
+            )
+            return CrewOutput(response=error_response, frontend_state=FrontendState.CALENDAR_ERROR).model_dump_json()
 
 

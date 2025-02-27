@@ -22,7 +22,7 @@ export function NavigationMenu() {
   return (
     <div className="w-screen mx-auto px-4 md:px-6 lg:px-8 flex h-16 items-center justify-between">
       <Link href="/" className="font-serif text-2xl md:text-xl hover:opacity-80 transition-opacity">
-          Hotel Asgardeo
+          Hotel Gardeo
       </Link>
       <div className="flex items-center space-x-2">
         {!session && (

@@ -1,5 +1,5 @@
 interface LoadingIndicatorProps {
-  action?: 'searching' | 'booking' | 'default'
+  action?: 'searching' | 'booking' | 'default' | 'add_to_calendar'
 }
 
 export function LoadingIndicator({ action = 'default' }: LoadingIndicatorProps) {
@@ -8,7 +8,9 @@ export function LoadingIndicator({ action = 'default' }: LoadingIndicatorProps) 
       case 'searching':
         return 'Searching for available rooms...'
       case 'booking':
-        return 'Processing your request...'
+        return 'Processing your booking request...'
+      case 'add_to_calendar':
+        return 'Adding to your calendar...'
       default:
         return 'Thinking...'
     }

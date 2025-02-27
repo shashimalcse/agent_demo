@@ -10,24 +10,27 @@ from utils.constants import FlowState, FrontendState
 from schemas import CrewOutput, Response
 from utils.asgardeo_manager import asgardeo_manager
 
-class FetchBookingsToolInput(BaseModel):
-    """Input schema for FetchBookingsTool."""
-    booking_id: Union[int, str] = Field(..., description="Id of the booking")
+class FetchHotelToolInput(BaseModel):
+    """Input schema for FetchHotelTool."""
+    hotel_id: Union[int, str] = Field(..., description="Id of the hotel")
 
-class FetchBookingsTool(BaseTool):
-    name: str = "FetchBookingsTool"
-    description: str = "Fetch a booking by id."
-    args_schema: Type[BaseModel] = FetchBookingsToolInput
+class FetchHotelTool(BaseTool):
+    name: str = "FetchHotelTool"
+    description: str = "Fetche a single hotel by id."
+    args_schema: Type[BaseModel] = FetchHotelToolInput
     thread_id: Optional[str] = None
 
     def __init__(self, thread_id: str = None):
         super().__init__()
         self.thread_id = thread_id
 
-    def _run(self, booking_id: Union[int, str]) -> str:
+    def _run(self, hotel_id: Union[int, str]) -> str:
+
+        if not hotel_id:
+            raise ValueError("hotel_id is required. If you don't have a room_id, you can fetch all hotels using the FetchHotelsTool.")
 
         try: 
-            token = asgardeo_manager.get_app_token(["read_bookings"])
+            token = asgardeo_manager.get_app_token(["read_rooms"])
         except Exception as e:
             raise Exception("Failed to get token. Retry the operation.")
 
@@ -35,10 +38,14 @@ class FetchBookingsTool(BaseTool):
             'Authorization': f'Bearer {token}'
         }
         
-        api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/bookings/{booking_id}", headers=headers)
+        api_response = requests.get(f"{os.environ['HOTEL_API_BASE_URL']}/hotels/{hotel_id}", headers=headers)
+
+        if api_response.status_code != 200:
+            raise Exception(f"Failed to fetch hotel with id {hotel_id}")
+
         rooms_data = api_response.json()
 
-        state_manager.add_state(self.thread_id, FlowState.FETCHED_BOOKINGS)
+        state_manager.add_state(self.thread_id, FlowState.FETCHED_HOTEL)
         
         response = Response(
             chat_response=None, 

@@ -1,10 +1,13 @@
+'use client'
+
 import Image from "next/image"
 import BookingWidget from "@/components/booking-widget"
 import ChatButton from "@/components/chat-button"
 import { NavigationMenu } from "@/components/navigation-menu"
+import { useSession } from "next-auth/react"
 
-export default async function Home() {
-
+export default function Home() {
+  const { data: session } = useSession()
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -16,7 +19,7 @@ export default async function Home() {
       <section className="relative min-h-[100dvh] w-full pt-16 md:pt-20">
         <Image
           src="/image.jpg"
-          alt="Aerial view of Asgardeo"
+          alt="Aerial view of Gardeo"
           fill
           className="object-cover"
           priority
@@ -35,7 +38,7 @@ export default async function Home() {
           <div className="space-y-6">
             <div className="space-y-2">
               <h2 className="text-sm md:text-base uppercase tracking-wider text-muted-foreground">Welcome to</h2>
-              <h1 className="text-3xl md:text-4xl font-serif">Hotel Asgardeo</h1>
+              <h1 className="text-3xl md:text-4xl font-serif">Hotel Gardeo</h1>
             </div>
             <h3 className="text-lg md:text-xl text-muted-foreground">Relaxed Luxury In Southern Coast</h3>
             <div className="space-y-4">
@@ -52,7 +55,7 @@ export default async function Home() {
             </div>
             <div className="pt-4 md:pt-6">
               <p className="font-medium text-base md:text-lg">Farrel Blom</p>
-              <p className="text-xs md:text-sm text-muted-foreground">Deputy General Manager - Hotel Asgardeo</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Deputy General Manager - Hotel Gardeo</p>
             </div>
           </div>
           <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted h-full w-full">
@@ -60,9 +63,11 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Chat Button */}
-      <ChatButton />
+      {
+        session && (
+          <ChatButton />
+        )
+      }
     </div>
   )
 }

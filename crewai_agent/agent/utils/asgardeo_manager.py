@@ -30,10 +30,12 @@ class AsgardeoManager:
         self.token_url = os.environ['TOKEN_URL']
         self.authorize_url = os.environ['AUTHORIZE_URL']
         self.redirect_uri = os.environ['REDIRECT_URI']
+        self.google_redirect_uri = os.environ['GOOGLE_REDIRECT_URI']
 
         self.auth_codes: Dict[str, AuthCode] = {}  # Store AuthCode by session_id
         self.auth_tokens: Dict[str, AuthToken] = {}  # Store AuthToken by token_id
         self.thread_user_map: Dict[str, str] = {}  # Store user_id against thread_id
+        self.state_thread_map: Dict[str, str] = {}  # Store thread_id against state
         self.state_mapping: Dict[str, AuthCode] = {}
 
     def store_auth_code(self, user_id: str, code: str):
@@ -48,7 +50,7 @@ class AsgardeoManager:
         """Retrieve the AuthCode for a user_id"""
         return self.auth_codes.get(user_id)        
 
-    def get_authorization_url(self, user_id: str, scopes: List[str] = ["openid"]) -> str:
+    def get_authorization_url(self, thread_id: str, user_id: str, scopes: List[str] = ["openid"]) -> str:
             """
             Generate the authorization URL for the OAuth2 flow matching the exact format provided,
             with scopes passed as a list
@@ -69,6 +71,7 @@ class AsgardeoManager:
                     f"state={state}&"
                     f"nonce={nonce}"
                 )
+                self.store_thread_id_against_state(thread_id, state)
                 auth_code = AuthCode(state=state, user_id=user_id, code=None, scopes=scopes)
                 self.state_mapping[state] = auth_code
                 # Store auth code entry
@@ -77,7 +80,7 @@ class AsgardeoManager:
             except Exception as e:
                 raise
 
-    def get_google_authorization_url(self, user_id: str, scopes: List[str] = ["openid"]) -> str:
+    def get_google_authorization_url(self, thread_id: str, user_id: str, scopes: List[str] = ["openid"],) -> str:
             """
             Generate the authorization URL for the OAuth2 flow matching the exact format provided,
             with scopes passed as a list
@@ -91,7 +94,7 @@ class AsgardeoManager:
                 authorization_url = (
                     f"{self.authorize_url}?"
                     f"client_id={self.client_id}&"
-                    f"redirect_uri={self.redirect_uri}&"
+                    f"redirect_uri={self.google_redirect_uri}&"
                     f"scope={scopes_str}&" 
                     f"response_type=code&"
                     f"response_mode=query&"
@@ -102,6 +105,7 @@ class AsgardeoManager:
                     f"state={state}&"
                     f"nonce={nonce}"
                 )
+                self.store_thread_id_against_state(thread_id, state)
                 auth_code = AuthCode(state=state, user_id=user_id, code=None, scopes=scopes)
                 self.state_mapping[state] = auth_code
                 # Store auth code entry
@@ -146,6 +150,43 @@ class AsgardeoManager:
         except Exception as e:
             print(e)
             raise
+
+    def fetch_google_token(self, state: str) -> str:
+        """
+        Exchange authorization code for access token
+        """
+        code_entry:AuthCode = self.state_mapping.get(state)
+        if not code_entry:
+            raise ValueError("No auth code found for user")
+        try:
+            response = requests.post(
+                self.token_url,
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code_entry.code,
+                    "scope": " ".join(code_entry.scopes),
+                    "redirect_uri": self.google_redirect_uri,
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret
+                },
+                verify=False
+            )
+            data = response.json()
+            print(data)
+            access_token = data.get("access_token")
+            token_key = self.get_token_key(code_entry.user_id, code_entry.scopes)
+            token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=access_token)
+            self.auth_tokens[token_key] = token
+            fed_tokens = data.get("federated_tokens")
+            print(fed_tokens)
+            if fed_tokens:
+                fed_access_token = fed_tokens[0].get("accessToken")
+                token = AuthToken(id=code_entry.user_id, scopes=code_entry.scopes, token=fed_access_token)
+                self.auth_tokens[token_key+"_google"] = token
+            return access_token
+        except Exception as e:
+            print(e)
+            raise        
 
     def fetch_app_token(self, scopes: List[str]) -> str:
         """
@@ -217,6 +258,16 @@ class AsgardeoManager:
         """
         return self.thread_user_map.get(thread_id)    
         
+    def store_thread_id_against_state(self, thread_id: str, state: str):
+        """
+        Store thread_id against state
+        """
+        self.state_thread_map[state] = thread_id
 
+    def get_thread_id_from_state(self, state: str) -> str:
+        """
+        Get thread_id from state
+        """
+        return self.state_thread_map.get(state)    
 
 asgardeo_manager = AsgardeoManager()

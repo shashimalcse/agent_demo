@@ -10,8 +10,11 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from utils.constants import FlowState
+from utils.state_manager import state_manager
 from utils.asgardeo_manager import AuthCode, asgardeo_manager
 from utils.chat_history import ChatHistory, chat_history_manager
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 app = FastAPI(title="LLM Chat API")
@@ -101,10 +104,44 @@ async def callback(
         auth_code.code = code
         asgardeo_manager.state_mapping[state] = auth_code
         token = asgardeo_manager.fetch_user_token(state)
-        print(token)
+        thread_id = asgardeo_manager.get_thread_id_from_state(state)
+        state_manager.add_state(thread_id, FlowState.BOOKING_AUTORIZED)
         return HTMLResponse(content="<html><body><script>window.location.href = 'http://localhost:3000/auth_success';</script></body></html>", status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/google_callback")
+async def callback(
+    code: str,
+    state: str,
+):
+    try:
+        print(code, state)
+        auth_code: AuthCode = asgardeo_manager.state_mapping.get(state)
+        print(auth_code.__str__())
+        if not auth_code:
+            raise HTTPException(status_code=400, detail="Invalid state")
+        auth_code.code = code
+        asgardeo_manager.state_mapping[state] = auth_code
+        token = asgardeo_manager.fetch_google_token(state)
+        thread_id = asgardeo_manager.get_thread_id_from_state(state)
+        state_manager.add_state(thread_id, FlowState.CALENDAR_AUTORIZED)
+        return HTMLResponse(content="<html><body><script>window.location.href = 'http://localhost:3000/auth_success';</script></body></html>", status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))    
+    
+@app.get("/state/{thread_id}")
+async def callback(
+    thread_id: str
+):
+    try:
+        states = {
+            "states": [state.name for state in state_manager.get_states(thread_id)]
+        }
+        return JSONResponse(content=states)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))    
 
 @app.get("/health")
 async def health_check():

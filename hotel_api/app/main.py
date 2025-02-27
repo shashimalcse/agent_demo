@@ -18,8 +18,8 @@ app.add_middleware(
 # In-memory data stores
 hotels_data = {
     1: {
-        "name": "Asgardeo Saman Villa",
-        "description": "Enjoy a luxurious stay at Asgardeo Saman Villas in your suite, and indulge in a delicious breakfast and your choice of lunch or dinner from our daily set menus served at the restaurant. Access exquisite facilities, including the infinity pool, Sahana Spa, gymnasium and library, as you unwind in paradise.",
+        "name": "Gardeo Saman Villa",
+        "description": "Enjoy a luxurious stay at Gardeo Saman Villas in your suite, and indulge in a delicious breakfast and your choice of lunch or dinner from our daily set menus served at the restaurant. Access exquisite facilities, including the infinity pool, Sahana Spa, gymnasium and library, as you unwind in paradise.",
         "location": "Bentota, Sri Lanka",
         "rating": 4.5,
         "amenities": ["Infinity Pool", "Sahana Spa", "Gymnasium", "Library", "Restaurant", "Room Service"],
@@ -33,8 +33,8 @@ hotels_data = {
         "promotions": ["Early Bird 20% off", "Stay 3 nights get 1 free"]
     },
     2: {
-        "name": "Asgardeo Colombo Seven",
-        "description": "Asgardeo Colombo Seven is located in the heart of Colombo, the commercial capital of Sri Lanka and offers the discerning traveler contemporary accommodation and modern design aesthetic. Rising over the city landscape, the property boasts stunning views, a rooftop bar and pool, main restaurant, gym and spa services, as well as conference facilities.",
+        "name": "Gardeo Colombo Seven",
+        "description": "Gardeo Colombo Seven is located in the heart of Colombo, the commercial capital of Sri Lanka and offers the discerning traveler contemporary accommodation and modern design aesthetic. Rising over the city landscape, the property boasts stunning views, a rooftop bar and pool, main restaurant, gym and spa services, as well as conference facilities.",
         "location": "Colombo 07, Sri Lanka", 
         "rating": 4.9,
         "amenities": ["Rooftop Pool", "Spa", "Gym", "Conference Facilities", "Restaurant", "Rooftop Bar"],
@@ -48,8 +48,8 @@ hotels_data = {
         "promotions": ["Business Package", "Weekend Special"]
     },
     3: {
-        "name": "Asgardeo Kandy Hills",
-        "description": "Set amidst the misty hills of Kandy, Asgardeo Kandy Hills offers breathtaking views of the surrounding mountains. This heritage property combines traditional Sri Lankan architecture with modern luxury, featuring an infinity pool overlooking the valley, authentic local cuisine, and a wellness center.",
+        "name": "Gardeo Kandy Hills",
+        "description": "Set amidst the misty hills of Kandy, Gardeo Kandy Hills offers breathtaking views of the surrounding mountains. This heritage property combines traditional Sri Lankan architecture with modern luxury, featuring an infinity pool overlooking the valley, authentic local cuisine, and a wellness center.",
         "location": "Kandy, Sri Lanka",
         "rating": 4.7,
         "amenities": ["Infinity Pool", "Wellness Center", "Heritage Restaurant", "Tea Lounge", "Mountain Biking", "Cultural Tours"],
@@ -63,8 +63,8 @@ hotels_data = {
         "promotions": ["Cultural Experience Package", "Honeymoon Special"]
     },
     4: {
-        "name": "Asgardeo Beach Resort Galle",
-        "description": "Located along the historic Galle coast, Asgardeo Beach Resort offers direct beach access and stunning views of the Indian Ocean. The resort features colonial-era architecture, beachfront dining, water sports facilities, and a luxury spa.",
+        "name": "Gardeo Beach Resort Galle",
+        "description": "Located along the historic Galle coast, Gardeo Beach Resort offers direct beach access and stunning views of the Indian Ocean. The resort features colonial-era architecture, beachfront dining, water sports facilities, and a luxury spa.",
         "location": "Galle, Sri Lanka",
         "rating": 4.8,
         "amenities": ["Private Beach", "Water Sports", "Beachfront Dining", "Luxury Spa", "Infinity Pool", "Kids Club"],
@@ -82,17 +82,18 @@ hotels_data = {
 room_type_data = {
     "deluxe": {"description": "The spacious rooms are defined by king size beds commanding a modern yet minimal ambience, with amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveler needs."},
     "super_deluxe": {"description": "The super deluxe rooms are defined by king size beds commanding a modern yet minimal ambience, with a bathtub and amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveler needs."},
-    "studio": {"description": "The 1 bedroom serviced apartments spacious living areas as well as a kitchen housing a cooker, fridge, washing machine and microwave. Rooms are defined by king size beds commanding a modern yet minimal ambience, with amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveller needs."}
+    "studio": {"description": "The 1 bedroom serviced apartments spacious living areas as well as a kitchen housing a cooker, fridge, washing machine and microwave. Rooms are defined by king size beds commanding a modern yet minimal ambience, with amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveller needs."},
+    "standard": {"description": "The standard rooms are defined by king size beds commanding a modern yet minimal ambience, with amenities set in minimalist contours of elegance and efficiency with all the creature comforts a traveler needs."}
 }
 
 rooms_data = {
     1: {
         101: {
             "room_number": "101",
-            "room_type": "deluxe",
-            "price_per_night": 99.99,
+            "room_type": "standard",
+            "price_per_night": 69.99,
             "occupancy": 2,
-            "amenities": ["Air Conditioning", "Mini Bar", "Free WiFi", "Safe"],
+            "amenities": ["Air Conditioning", "Free WiFi", "Safe"],
             "cancellationPolicy": "Free cancellation up to 24 hours before check-in",
             "is_available": True
         },
@@ -136,11 +137,11 @@ rooms_data = {
         },
         203: {
             "room_number": "203",
-            "room_type": "studio",
-            "price_per_night": 289.99,
+            "room_type": "standard",
+            "price_per_night": 89.99,
             "occupancy": 4,
-            "amenities": ["Air Conditioning", "Kitchen", "Free WiFi", "Safe", "Washing Machine"],
-            "cancellationPolicy": "Free cancellation up to 48 hours before check-in", 
+            "amenities": ["Air Conditioning", "Free WiFi"],
+            "cancellationPolicy": "Free cancellation up to 24 hours before check-in", 
             "is_available": True
         }
     },
@@ -209,7 +210,7 @@ bookings_data = {}
 user_bookings_data = [
     {
         "hotel_id": 1,
-        "hotel_name": "Asgardeo Saman Villa",
+        "hotel_name": "Gardeo Saman Villa",
         "user_id": "6dcec033-8117-49bb-8363-3c519bcdbb73",
         "room_id": 101,
         "room_type": "deluxe",
@@ -219,7 +220,7 @@ user_bookings_data = [
     },
     {
         "hotel_id": 2,
-        "hotel_name": "Asgardeo Colombo Seven",
+        "hotel_name": "Gardeo Colombo Seven",
         "user_id": "6dcec033-8117-49bb-8363-3c519bcdbb73",
         "room_id": 201,
         "room_type": "studio",
@@ -236,72 +237,72 @@ async def list_hotels(
 ):
     return {
         "hotels": [
-            Hotel(id=hid, **hotel_data)
+            HotelBasic(id=hid, **hotel_data)
             for hid, hotel_data in hotels_data.items()
         ]
     }
 
-@app.get("/hotels/{hotel_id}/rooms", response_model=Rooms)
-async def list_hotel_rooms(
+@app.get("/hotels/{hotel_id}", response_model=Hotel)
+async def get_hotel(
     hotel_id: int,
     token_data: TokenData = Security(validate_token, scopes=["read_rooms"])
 ):
-    if hotel_id not in rooms_data:
+    if hotel_id not in hotels_data:
         raise HTTPException(status_code=404, detail="Hotel not found")
-        
+    
+    hotel = hotels_data[hotel_id]
+    rooms = [
+        Room(id=rid, **room_data)
+        for rid, room_data in rooms_data[hotel_id].items()
+    ]
+    
     return {
-        "rooms": [
-            Room(id=rid, **room_data)
-            for rid, room_data in rooms_data[hotel_id].items()
-        ]
+        "id": hotel_id,
+        "name": hotel["name"],
+        "description": hotel["description"],
+        "location": hotel["location"],
+        "rating": hotel["rating"],
+        "amenities": hotel["amenities"],
+        "policies": hotel["policies"],
+        "roomTypes": hotel["roomTypes"],
+        "promotions": hotel["promotions"],
+        "rooms": rooms
     }
+class Room(BaseModel):
+    id: int
+    room_number: str
+    room_type: str
+    price_per_night: float
+    occupancy: int
+    amenities: List[str]
+    cancellationPolicy: str
+    is_available: bool
 
-
-@app.get("/rooms/search", response_model=List[RoomSearchResult])
-async def search_rooms(
-    check_in: date,
-    check_out: date,
-    name: str,
+@app.get("/rooms/{room_id}", response_model=Room)
+async def get_room_details(
+    room_id: int,
     token_data: TokenData = Security(validate_token, scopes=["read_rooms"])
 ):
-    search_results = []
+    # Find the hotel that has this room
+    room_data = None
+    for hotel_rooms in rooms_data.values():
+        if room_id in hotel_rooms:
+            room_data = hotel_rooms[room_id]
+            break
     
-    for hotel_id, hotel in hotels_data.items():
-        # Filter by location if specified
-        if name and name.lower() not in hotel["name"].lower():
-            continue
-            
-        hotel_rooms = rooms_data.get(hotel_id, {})
-        for rid, room in hotel_rooms.items():
-            
-            # Check availability for the given dates
-            is_available = True
-            for booking in bookings_data.values():
-                if (booking["hotel_id"] == hotel_id and 
-                    booking["room_id"] == rid and 
-                    not (check_out <= booking["check_in"] or check_in >= booking["check_out"])):
-                    is_available = False
-                    break
-            
-            if is_available:
-                # Get room type description
-                room_type_description = room_type_data[room["room_type"]]["description"]
-                
-                search_results.append(
-                    RoomSearchResult(
-                        room_id=rid,
-                        hotel_id=hotel_id,
-                        hotel_name=hotel["name"],
-                        hotel_rating=hotel["rating"],
-                        hotel_description=hotel["description"],
-                        room_number=room["room_number"],
-                        room_type=room["room_type"],
-                        room_type_description=room_type_description,
-                        price_per_night=room["price_per_night"]
-                    )
-                )
+    if not room_data:
+        raise HTTPException(status_code=404, detail="Room not found")
     
-    return search_results
+    return {
+        "id": room_id,
+        "room_number": room_data["room_number"],
+        "room_type": room_data["room_type"],
+        "price_per_night": room_data["price_per_night"],
+        "occupancy": room_data["occupancy"],
+        "amenities": room_data["amenities"],
+        "cancellationPolicy": room_data["cancellationPolicy"],
+        "is_available": room_data["is_available"]
+    }
 
 @app.post("/bookings", response_model=Booking)
 async def book_room(
@@ -359,32 +360,15 @@ async def get_booking_details(
         raise HTTPException(status_code=404, detail="Booking not found")
     return Booking(**bookings_data[booking_id])
 
-@app.get("/users/{user_id}/bookings", response_model=List[Booking])
-async def get_user_bookings(
-    user_id: str,
-    token_data: TokenData = Security(validate_token, scopes=["read_bookings"])
-):
-    return [
-        Booking(**booking)
-        for booking in user_bookings_data
-        if booking["user_id"] == user_id
-    ]
-
-@app.get("/users/{user_id}/loyalty", response_model=UserLoyalty)
-async def get_user_loyalty(
-    user_id: int,
-    token_data: TokenData = Security(validate_token, scopes=["read_loyalty"])
-):
-    # Return mock loyalty data
-    return {"user_id": user_id, "loyalty_points": 1200}
-
-@app.get("/rooms/{room_id}/details", response_model=RoomDetails)
-async def get_room_details(
-    room_id: int,
-    check_in: date,
-    check_out: date,
+@app.post("/bookings/preview", response_model=BookingPreview)
+async def get_booking_preview(
+    booking_preview_request: BookingPreviewRequest,
     token_data: TokenData = Security(validate_token, scopes=["read_rooms"])
 ):
+    room_id = booking_preview_request.room_id
+    check_in = booking_preview_request.check_in
+    check_out = booking_preview_request.check_out
+
     # Find the hotel that has this room
     hotel_id = None
     room_data = None
@@ -429,3 +413,23 @@ async def get_room_details(
         "check_in": check_in,
         "check_out": check_out
     }
+
+
+@app.get("/users/{user_id}/bookings", response_model=List[Booking])
+async def get_user_bookings(
+    user_id: str,
+    token_data: TokenData = Security(validate_token, scopes=["read_bookings"])
+):
+    return [
+        Booking(**booking)
+        for booking in user_bookings_data
+        if booking["user_id"] == user_id
+    ]
+
+@app.get("/users/{user_id}/loyalty", response_model=UserLoyalty)
+async def get_user_loyalty(
+    user_id: int,
+    token_data: TokenData = Security(validate_token, scopes=["read_loyalty"])
+):
+    # Return mock loyalty data
+    return {"user_id": user_id, "loyalty_points": 1200}

@@ -32,8 +32,8 @@ export function PreferencesWidget({ onSubmit }: { onSubmit: (preferences: Prefer
             <SelectValue placeholder="Location" />
           </SelectTrigger>
           <SelectContent>
-              <SelectItem value="Asgardeo Saman Villa">Asgardeo Saman Villa</SelectItem>
-              <SelectItem value="Asgardeo Colombo Seven">Asgardeo Colombo Seven</SelectItem>
+              <SelectItem value="Gardeo Saman Villa">Gardeo Saman Villa</SelectItem>
+              <SelectItem value="Gardeo Colombo Seven">Gardeo Colombo Seven</SelectItem>
           </SelectContent>
         </Select>
       </div>

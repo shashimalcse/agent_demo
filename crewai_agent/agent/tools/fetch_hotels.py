@@ -28,7 +28,7 @@ class FetchHotelsTool(BaseTool):
         try: 
             token = asgardeo_manager.get_app_token(["read_hotels"])
         except Exception as e:
-            raise
+            raise Exception("Failed to get token. Retry the operation.")
 
         headers = {
             'Authorization': f'Bearer {token}'
