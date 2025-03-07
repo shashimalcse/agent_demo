@@ -31,7 +31,6 @@ class BookingPreviewTool(BaseTool):
     def _run(self, room_id: Union[int, str], check_in: date, check_out: date) -> str:
         try:
 
-
             if not room_id:
                 raise Exception("room_id is required. If you don't have a room_id, you can fetch all rooms using the FetchHotelTool.")
             
@@ -95,7 +94,7 @@ class BookingPreviewTool(BaseTool):
 
         except Exception as e:
             error_response = Response(
-                chat_response=f"An error occurred while re: {str(e)}",
-                tool_response={"error": str(e), "status": "error"}
+                chat_response=f"{str(e)}",
+                tool_response={},
             )
             return CrewOutput(response=error_response, frontend_state=FrontendState.BOOKING_PREVIEW_ERROR).model_dump_json()

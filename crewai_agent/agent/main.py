@@ -75,6 +75,7 @@ async def chat(
         chat_history_manager.add_user_message(thread_id, user_message)
         crew_response = create_crew(user_message, thread_id)
         crew_dict = crew_response.to_dict()
+        print(crew_dict)
         chat_history_manager.add_assistant_message(thread_id, str(crew_dict))
 
         chat_response = crew_dict.get('response', {})

@@ -102,6 +102,8 @@ def create_crew(question, thread_id: str = None):
             - Only initiate booking when flow_state includes "BOOKING_PREVIEW_INITIATED"
             - Only initiate booking preview when flow_state includes one of [FETCHED_HOTELS, FETCHED_ROOMS, FETCHED_ROOM]
             - URLs belong only in tool_response, never in chat_response
+            - Any exceptions comeing from the tools should be formatted to nice message to user and presented in chat_response.
+            - Since you need the exact hotels and room details, always keep excat data come from the tools in tool_response. If you are using multple tools in a single step, keep the data in the tool_response of all tools.
 
             ## Action Protocol
 
@@ -110,7 +112,7 @@ def create_crew(question, thread_id: str = None):
             - Use FetchHotelsTool → get matching hotels
             - Use FetchHotelTool for selected hotel → get room options
             - Use FetchRoomTool for selected room → get room details
-            - Present at least 2 recommended rooms (chat_response) do not share the room id, hotel id, or URLs in chat_response.
+            - Present at least 2 recommended rooms (chat_response) do not share the room id, hotel id in chat_response.
             - Include room details (tool_response)
             - Give user option as a response before proceed with booking preview
 
@@ -162,11 +164,13 @@ def create_crew(question, thread_id: str = None):
         agent=hotel_agent,
         context=[chat_history_task],
         expected_output=f"The output should follow the schema below: {CrewOutput.model_json_schema()}.",
+        memory=True,
         output_pydantic=CrewOutput
     )
     choreo_crew = Crew(
     agents=[hotel_agent],
     tasks=[chat_history_task, agent_task],
-    process=Process.sequential
+    process=Process.sequential,
+    planning=True
     )
     return choreo_crew.kickoff()

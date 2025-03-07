@@ -53,13 +53,11 @@ export function AddToCalendar({ threadId, authorizationUrl, onAddToCalendar, onS
     return (
         !hasClicked ? (<div className="mt-4 flex flex-col gap-2">
             <Card className="w-full mt-4">
-                <CardHeader>
-                    <CardTitle className="text-xl">Calendar</CardTitle>
-                </CardHeader>
+
                 <CardContent>
                     {
                         <div className="flex flex-col space-y-2">
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p className="text-sm text-gray-600 mb-2 mt-4">
                                 Add your booking to Google Calendar to keep track of your stay.
                             </p>
                             <div className="flex flex-row space-x-2">
