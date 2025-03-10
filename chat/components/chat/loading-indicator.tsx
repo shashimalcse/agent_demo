@@ -18,11 +18,11 @@ export function LoadingIndicator({ action = 'default' }: LoadingIndicatorProps) 
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">{getMessage()}</p>
-      <div className="flex space-x-2">
-        <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]"></div>
-        <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]"></div>
-        <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground"></div>
+      <p className="text-sm text-gray-600 font-medium">{getMessage()}</p>
+      <div className="flex space-x-1.5">
+        <div className="h-2 w-2 animate-bounce rounded-full bg-orange-500 opacity-75 [animation-delay:-0.3s]"></div>
+        <div className="h-2 w-2 animate-bounce rounded-full bg-orange-500 opacity-75 [animation-delay:-0.15s]"></div>
+        <div className="h-2 w-2 animate-bounce rounded-full bg-orange-500 opacity-75"></div>
       </div>
     </div>
   )

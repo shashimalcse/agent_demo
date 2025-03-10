@@ -6,8 +6,9 @@ from pydantic import BaseModel, Field
 import requests
 
 from schemas import CrewOutput, Response
+from utils.state_manager import state_manager
 from utils.asgardeo_manager import asgardeo_manager
-from utils.constants import FrontendState
+from utils.constants import FlowState, FrontendState
 
 class AddCalanderToolInput(BaseModel):
     """Input schema for AddCalanderTool."""
@@ -58,9 +59,9 @@ class AddCalanderTool(BaseTool):
 
             # Check the response
             if response.status_code == 200:
-                print(event)
                 message = f"Event created successfully in your calendar"
                 frontend_state = FrontendState.ADDED_TO_CALENDAR
+                state_manager.add_state(self.thread_id, FlowState.ADDED_TO_CALENDAR)
             else:
                 message = "An error occurred while adding the event to the calendar. Please try the Add to Calendar tool again."
                 frontend_state = FrontendState.CALENDAR_ERROR
