@@ -7,7 +7,7 @@ export default function AuthSuccess() {
   useEffect(() => {
     const timer = setTimeout(() => {
       window.close()
-    }, 1000)
+    }, 10)
 
     return () => clearTimeout(timer)
   }, [])

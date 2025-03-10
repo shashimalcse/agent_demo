@@ -319,13 +319,13 @@ async def book_room(
     if booking.room_id not in rooms_data.get(booking.hotel_id, {}):
         raise HTTPException(status_code=404, detail="Room not found")
     
-    # Check if room is available for the dates
-    for existing_booking in bookings_data.values():
-        if (existing_booking["hotel_id"] == booking.hotel_id and 
-            existing_booking["room_id"] == booking.room_id and 
-            not (booking.check_out <= existing_booking["check_in"] or 
-                 booking.check_in >= existing_booking["check_out"])):
-            raise HTTPException(status_code=400, detail="Room not available for these dates")
+    # # Check if room is available for the dates
+    # for existing_booking in bookings_data.values():
+    #     if (existing_booking["hotel_id"] == booking.hotel_id and 
+    #         existing_booking["room_id"] == booking.room_id and 
+    #         not (booking.check_out <= existing_booking["check_in"] or 
+    #              booking.check_in >= existing_booking["check_out"])):
+    #         raise HTTPException(status_code=400, detail="Room not available for these dates")
     
     # Get hotel and room data
     hotel = hotels_data[booking.hotel_id]
@@ -383,12 +383,12 @@ async def get_booking_preview(
     
     # Check room availability
     is_available = True
-    for booking in bookings_data.values():  # Fix: iterate over values
-        if (booking["hotel_id"] == hotel_id and 
-            booking["room_id"] == room_id and 
-            not (check_out <= booking["check_in"] or check_in >= booking["check_out"])):
-            is_available = False
-            break
+    # for booking in bookings_data.values():  # Fix: iterate over values
+    #     if (booking["hotel_id"] == hotel_id and 
+    #         booking["room_id"] == room_id and 
+    #         not (check_out <= booking["check_in"] or check_in >= booking["check_out"])):
+    #         is_available = False
+    #         break
     
     # Calculate total price
     days = (check_out - check_in).days

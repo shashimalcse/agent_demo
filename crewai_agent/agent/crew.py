@@ -170,7 +170,6 @@ def create_crew(question, thread_id: str = None):
     choreo_crew = Crew(
     agents=[hotel_agent],
     tasks=[chat_history_task, agent_task],
-    process=Process.sequential,
-    planning=True
+    process=Process.sequential
     )
     return choreo_crew.kickoff()

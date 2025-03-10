@@ -13,53 +13,83 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
-              <SyntaxHighlighter
-                style={vscDarkPlus}
-                language={match[1]}
-                PreTag="div"
-                {...props}
-              >
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
+              <div className="my-2 rounded-md overflow-hidden">
+                <SyntaxHighlighter
+                  style={vscDarkPlus}
+                  language={match[1]}
+                  PreTag="div"
+                  customStyle={{ 
+                    borderRadius: '0.375rem',
+                    margin: 0,
+                    fontSize: '0.875rem'
+                  }}
+                  {...props}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+              </div>
             ) : (
-              <code className={className} {...props}>
+              <code className="px-1 py-0.5 rounded-sm bg-gray-100 text-gray-800 text-xs font-mono" {...props}>
                 {children}
               </code>
             );
           },
-          a: ({ node, ...props }) => (
+          p: ({ children, ...props }) => (
+            <p className="my-1.5 leading-relaxed" {...props}>{children}</p>
+          ),
+          h1: ({ children, ...props }) => (
+            <h1 className="text-lg font-semibold mb-2 mt-3 text-gray-900" {...props}>{children}</h1>
+          ),
+          h2: ({ children, ...props }) => (
+            <h2 className="text-base font-semibold mb-2 mt-3 text-gray-900" {...props}>{children}</h2>
+          ),
+          h3: ({ children, ...props }) => (
+            <h3 className="text-sm font-semibold mb-2 mt-3 text-gray-900" {...props}>{children}</h3>
+          ),
+          a: ({ children, ...props }) => (
             <a 
               {...props} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-blue-500 hover:text-blue-700 underline"
-            />
+              className="text-orange-600 hover:text-orange-700 underline underline-offset-2"
+            >
+              {children}
+            </a>
           ),
-          ul: ({ node, ...props }) => (
-            <ul className="list-disc pl-5 my-2" {...props} />
+          ul: ({ children, ...props }) => (
+            <ul className="list-disc pl-4 my-1.5" {...props}>{children}</ul>
           ),
-          ol: ({ node, ...props }) => (
-            <ol className="list-decimal pl-5 my-2" {...props} />
+          ol: ({ children, ...props }) => (
+            <ol className="list-decimal pl-4 my-1.5" {...props}>{children}</ol>
           ),
-          table: ({ node, ...props }) => (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-300" {...props} />
+          li: ({ children, ...props }) => (
+            <li className="my-0.5" {...props}>{children}</li>
+          ),
+          blockquote: ({ children, ...props }) => (
+            <blockquote className="pl-3 border-l-2 border-gray-200 text-gray-600 my-2" {...props}>{children}</blockquote>
+          ),
+          hr: ({ ...props }) => (
+            <hr className="my-2 border-gray-200" {...props} />
+          ),
+          table: ({ children, ...props }) => (
+            <div className="overflow-x-auto my-2 border border-gray-200 rounded-md">
+              <table className="min-w-full divide-y divide-gray-200" {...props}>{children}</table>
             </div>
           ),
-          thead: ({ node, ...props }) => (
-            <thead className="bg-gray-100 dark:bg-gray-800" {...props} />
+          thead: ({ children, ...props }) => (
+            <thead className="bg-gray-50" {...props}>{children}</thead>
           ),
-          tr: ({ node, ...props }) => (
-            <tr className="even:bg-gray-50 dark:even:bg-gray-700" {...props} />
+          tr: ({ children, ...props }) => (
+            <tr className="even:bg-gray-50" {...props}>{children}</tr>
           ),
-          th: ({ node, ...props }) => (
-            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" {...props} />
+          th: ({ children, ...props }) => (
+            <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-700 uppercase" {...props}>{children}</th>
           ),
-          td: ({ node, ...props }) => (
-            <td className="px-3 py-2 whitespace-nowrap text-sm" {...props} />
+          td: ({ children, ...props }) => (
+            <td className="px-2 py-1.5 text-sm" {...props}>{children}</td>
           ),
         }}
       >
